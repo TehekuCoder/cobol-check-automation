@@ -17,7 +17,7 @@ ZOWE_USERNAME="Z88469"
 
 # --- 2. Prepare Directory ---
 # Navigate to the cobolcheck directory in USS
-cd "$HOME/cobolcheck" || { echo "Error: Could not find cobolcheck directory"; exit 1; }
+cd "cobolcheck" || { echo "Error: Could not find cobolcheck directory"; exit 1; }
 echo "Current directory: $(pwd)"
 
 # Ensure the cobolcheck launcher and scripts are executable
