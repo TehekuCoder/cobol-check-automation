@@ -40,7 +40,11 @@ jobs:
           chmod +x .github/scripts/zowe_operations.sh
           ./.github/scripts/zowe_operations.sh
 
-      - name: Execute Tests (Mainframe)
+      - name: Execute Tests on Mainframe via SSH
         run: |
-          chmod +x .github/scripts/mainframe_operations.sh
-          ./.github/scripts/mainframe_operations.sh
+          # We tell Zowe to log in via SSH and run the script on the mainframe
+          zowe zos-ssh issue command "bash /z/z88469/cobolcheck/mainframe_operations.sh" \
+            --host ${{ secrets.ZOWE_HOST }} \
+            --user ${{ secrets.ZOWE_USERNAME }} \
+            --pass ${{ secrets.ZOWE_PASSWORD }} \
+            --port 22 # SSH uses port 22, not 10443!
