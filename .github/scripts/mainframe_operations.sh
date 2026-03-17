@@ -1,74 +1,63 @@
 #!/bin/bash
 
 # mainframe_operations.sh
-# Purpose: Run COBOL-Check on USS and copy generated artifacts to MVS
+# Purpose: Execute COBOL-Check on USS and migrate artifacts to MVS datasets
+# Usage: ./mainframe_operations.sh <USER_ID>
 
-# --- 1. Set up Environment ---
+# Capture the first argument passed from the Zowe SSH command
+USER_ID=$1
+
+if [ -z "$USER_ID" ]; then
+    echo "Error: No User ID provided. Usage: script.sh <USER_ID>"
+    exit 1
+fi
+
+# --- Environment Setup ---
 export JAVA_HOME=/usr/lpp/java/J8.0_64
 export PATH=$PATH:$JAVA_HOME/bin
 export PATH=$PATH:/usr/lpp/zowe/cli/node/bin
 
-# Verify Java version for the log
-echo "Checking environment..."
-java -version
+# Navigate to the work directory (absolute path for reliability)
+WORKDIR="/z/$(echo $USER_ID | tr '[:upper:]' '[:lower:]')/cobolcheck"
+cd "$WORKDIR" || { echo "Error: Path $WORKDIR not found"; exit 1; }
 
-# Set Mainframe User ID (Ensure NO space after '=')
-ZOWE_USERNAME="Z88469"
+echo "Running in: $(pwd)"
 
-# --- 2. Prepare Directory ---
-# Navigate to the cobolcheck directory in USS
-cd "$HOME/cobolcheck" || { echo "Error: Could not find cobolcheck directory"; exit 1; }
-echo "Current directory: $(pwd)"
-
-# Ensure the cobolcheck launcher and scripts are executable
+# Ensure execution permissions for the tool and scripts
 chmod +x cobolcheck
 chmod +x scripts/linux_gnucobol_run_tests
-echo "Permissions updated for cobolcheck and test scripts."
 
-# --- 3. Test Execution Function ---
-run_cobolcheck() {
-    program=$1
+# --- Execution Function ---
+run_test_and_copy() {
+    prog=$1
     echo "--------------------------------------------------"
-    echo "Starting COBOL-Check for: $program"
+    echo "Processing Program: $prog"
 
     # Run COBOL-Check
-    # -p specifies the program name to be tested
-    ./cobolcheck -p "$program"
-    echo "COBOL-Check execution finished for $program."
+    ./cobolcheck -p "$prog"
 
-    # --- 4. Artifact Migration (USS to MVS) ---
-    
-    # Check if the Test Driver (CC##99.CBL) was generated
+    # Copy generated Test Driver (CC##99.CBL) to MVS Dataset
     if [ -f "CC##99.CBL" ]; then
-        echo "Test driver CC##99.CBL found. Copying to PDS..."
-        # Copying from USS to MVS PDS Member
-        if cp "CC##99.CBL" "//'${ZOWE_USERNAME}.CBL($program)'"; then
-            echo "Success: Copied CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
+        if cp "CC##99.CBL" "//'${USER_ID}.CBL($prog)'"; then
+            echo "Successfully copied Driver to ${USER_ID}.CBL($prog)"
         else
-            echo "Error: Failed to copy CC##99.CBL to MVS"
+            echo "Failed to copy Driver to MVS"
         fi
-    else
-        echo "Warning: CC##99.CBL not found for $program. Check test suite (.cut file)."
     fi
 
-    # Check and copy the JCL file
-    if [ -f "${program}.JCL" ]; then
-        echo "JCL file found. Copying to PDS..."
-        if cp "${program}.JCL" "//'${ZOWE_USERNAME}.JCL($program)'"; then
-            echo "Success: Copied ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
+    # Copy JCL to MVS Dataset
+    if [ -f "${prog}.JCL" ]; then
+        if cp "${prog}.JCL" "//'${USER_ID}.JCL($prog)'"; then
+            echo "Successfully copied JCL to ${USER_ID}.JCL($prog)"
         else
-            echo "Error: Failed to copy ${program}.JCL to MVS"
+            echo "Failed to copy JCL to MVS"
         fi
-    else
-        echo "Note: ${program}.JCL not found in USS."
     fi
 }
 
-# --- 5. Main Execution Loop ---
-# Iterating through the programs defined in Lab 2 & 3
+# Run for all programs specified in the Lab
 for program in NUMBERS EMPPAY DEPTPAY; do
-    run_cobolcheck "$program"
+    run_test_and_copy "$program"
 done
 
-echo "--------------------------------------------------"
-echo "Mainframe operations completed successfully."
+echo "Mainframe operations completed."

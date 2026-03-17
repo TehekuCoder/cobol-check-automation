@@ -1,16 +1,14 @@
-name: COBOL Check Automation 2026
+name: COBOL Check Automation
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
-  cobol-check:
+  mainframe-pipeline:
     runs-on: ubuntu-latest
     
-    # We define the connection data centrally as environment variables
+    # Map Secrets to Environment Variables for the Runner
     env:
       ZOWE_HOST: ${{ secrets.ZOWE_HOST }}
       ZOWE_PORT: ${{ secrets.ZOWE_PORT }}
@@ -18,16 +16,10 @@ jobs:
       ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
 
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Set up Node.js
+      - name: Setup Node.js (for Zowe CLI)
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -35,16 +27,17 @@ jobs:
       - name: Install Zowe CLI
         run: npm install -g @zowe/cli@zowe-v2-lts
 
-      - name: Setup & Upload (USS)
+      - name: Run Upload Script
+        # We pass the username to the script as an environment variable
         run: |
           chmod +x .github/scripts/zowe_operations.sh
           ./.github/scripts/zowe_operations.sh
 
       - name: Execute Tests on Mainframe via SSH
+        # We trigger the script on the mainframe and pass the username as the first argument ($1)
         run: |
-          # We tell Zowe to log in via SSH and run the script on the mainframe
-          zowe zos-ssh issue command "bash /z/z88469/cobolcheck/mainframe_operations.sh" \
-            --host ${{ secrets.ZOWE_HOST }} \
-            --user ${{ secrets.ZOWE_USERNAME }} \
-            --pass ${{ secrets.ZOWE_PASSWORD }} \
-            --port 22 # SSH uses port 22, not 10443!
+          zowe zos-ssh issue command "bash /z/$ZOWE_USERNAME/cobolcheck/mainframe_operations.sh $ZOWE_USERNAME" \
+            --host $ZOWE_HOST \
+            --user $ZOWE_USERNAME \
+            --pass $ZOWE_PASSWORD \
+            --port 22
