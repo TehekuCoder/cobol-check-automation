@@ -1,33 +1,36 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────
 # zowe_operations.sh
-# Purpose: Upload local files to USS using Zowe CLI and environment variables
+# Prepares the USS environment on the mainframe and uploads
+# the COBOL Check tool files.
+# ─────────────────────────────────────────────────────────────────
+set -euo pipefail   # exit on error, unset vars, or pipe failures
 
-# Check if variables are available
-if [ -z "$ZOWE_USERNAME" ]; then
-    echo "Error: ZOWE_USERNAME environment variable is not set."
-    exit 1
+# ── Validate required environment variables ──────────────────────
+: "${ZOWE_USERNAME:?ERROR: ZOWE_USERNAME is not set}"
+
+LOWERCASE_USERNAME=$(echo "$ZOWE_USERNAME" | tr '[:upper:]' '[:lower:]')
+REMOTE_DIR="/z/${LOWERCASE_USERNAME}/cobolcheck"
+
+echo "▶  Target USS directory: ${REMOTE_DIR}"
+
+# ── Ensure remote directory exists ───────────────────────────────
+if zowe zos-files list uss-files "$REMOTE_DIR" &>/dev/null; then
+  echo "✔  Directory already exists — skipping creation."
+else
+  echo "✦  Directory not found — creating ${REMOTE_DIR} …"
+  zowe zos-files create uss-directory "$REMOTE_DIR"
+  echo "✔  Directory created."
 fi
 
-# Convert username to lowercase for the USS path convention
-LOWER_USER=$(echo "$ZOWE_USERNAME" | tr '[:upper:]' '[:lower:]')
-REMOTE_DIR="/z/$LOWER_USER/cobolcheck"
-ZOWE_ARGS="--host $ZOWE_HOST --user $ZOWE_USERNAME --pass $ZOW_PASSWORD --port $ZOWE_PORT --reject-unauthorized false"
-
-echo "Target directory on Mainframe: $REMOTE_DIR"
-
-# 1. Ensure the directory exists
-zowe zos-files create uss-directory "$REMOTE_DIR" $ZOWE_ARGS || echo "Directory might already exist."
-
-# 2. Upload the COBOL-Check tool and source files
-# We use a wildcard for JAR files to avoid version mismatch errors
+# ── Upload COBOL Check files ──────────────────────────────────────
+echo "▶  Uploading cobol-check/ to mainframe …"
 zowe zos-files upload dir-to-uss "./cobol-check" "$REMOTE_DIR" \
   --recursive \
-  --binary-files "*.jar" \
-  $ZOWE_ARGS
+  --binary-files "cobol-check-*.jar"
 
-# 3. CRITICAL: Upload the mainframe-side script itself
-# This ensures the latest version of the logic is always available on the host
-zowe zos-files upload file-to-uss ".github/scripts/mainframe_operations.sh" "$REMOTE_DIR/mainframe_operations.sh" $ZOWE_ARGS
+# ── Verify upload ─────────────────────────────────────────────────
+echo "▶  Verifying upload:"
+zowe zos-files list uss-files "$REMOTE_DIR"
 
-echo "Upload process finished successfully."
+echo "✔  zowe_operations.sh completed successfully."
