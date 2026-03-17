@@ -1,20 +1,24 @@
 #!/bin/bash
+# zowe_operations.sh - Runs on GitHub Runner
 
-# zowe_operations.sh
-# Convert username to lowercase
+# Lowercase for USS paths
 LOWERCASE_USERNAME=$(echo "$ZOWE_USERNAME" | tr '[:upper:]' '[:lower:]')
+REMOTE_DIR="/z/$LOWERCASE_USERNAME/cobolcheck"
 
-# Check if directory exists, create if it doesn't
-if ! zowe zos-files list uss-files "/z/$LOWERCASE_USERNAME/cobolcheck" &>/dev/null; then
-  echo "Directory does not exist. Creating it..."
-  zowe zos-files create uss-directory /z/$LOWERCASE_USERNAME/cobolcheck
-else
-  echo "Directory already exists."
+# Zowe connection parameters (saves you from having to create a profile)
+ZOWE_ARGS="--host $ZOWE_HOST --port $ZOWE_PORT --user $ZOWE_USERNAME --pass $ZOWE_PASSWORD --reject-unauthorized false"
+
+echo "Check the directory on the mainframe..."
+if ! zowe zos-files list uss-files "$REMOTE_DIR" $ZOWE_ARGS &>/dev/null; then
+  echo "Create directory $REMOTE_DIR..."
+  zowe zos-files create uss-directory "$REMOTE_DIR" $ZOWE_ARGS
 fi
 
-# Upload files
-zowe zos-files upload dir-to-uss "./cobol-check" "/z/$LOWERCASE_USERNAME/cobolcheck" --recursive --binary-files "cobol-check-0.2.19.jar"
+echo "Upload files..."
+# The *.jar wildcard prevents errors during version updates!
+zowe zos-files upload dir-to-uss "./cobol-check" "$REMOTE_DIR" \
+  --recursive \
+  --binary-files "*.jar" \
+  $ZOWE_ARGS
 
-# Verify upload
-echo "Verifying upload:"
-zowe zos-files list uss-files "/z/$LOWERCASE_USERNAME/cobolcheck"
+echo "Upload successful."
