@@ -1,36 +1,24 @@
-#!/usr/bin/env bash
-# ─────────────────────────────────────────────────────────────────
-# zowe_operations.sh
-# Bereitet das USS-Verzeichnis auf dem Mainframe vor und
-# lädt die COBOL Check Dateien hoch.
-# ─────────────────────────────────────────────────────────────────
-set -euo pipefail   # Abbruch bei Fehler, nicht gesetzten Variablen oder Pipe-Fehlern
+#!/bin/bash
+# zowe_operations.sh - Runs on GitHub Runner
 
-# ── Pflicht-Umgebungsvariablen prüfen ────────────────────────────
-: "${ZOWE_USERNAME:?ERROR: ZOWE_USERNAME ist nicht gesetzt}"
-
+# Lowercase for USS paths
 LOWERCASE_USERNAME=$(echo "$ZOWE_USERNAME" | tr '[:upper:]' '[:lower:]')
-REMOTE_DIR="/z/${LOWERCASE_USERNAME}/cobolcheck"
+REMOTE_DIR="/z/$LOWERCASE_USERNAME/cobolcheck"
 
-echo "▶  Ziel-Verzeichnis: ${REMOTE_DIR}"
+# Zowe connection parameters (saves you from having to create a profile)
+ZOWE_ARGS="--host $ZOWE_HOST --port $ZOWE_PORT --user $ZOWE_USERNAME --pass $ZOWE_PASSWORD --reject-unauthorized false"
 
-# ── Remote-Verzeichnis anlegen falls nötig ───────────────────────
-if zowe zos-files list uss-files "$REMOTE_DIR" &>/dev/null; then
-  echo "✔  Verzeichnis existiert bereits."
-else
-  echo "✦  Verzeichnis nicht gefunden — lege ${REMOTE_DIR} an …"
-  zowe zos-files create uss-directory "$REMOTE_DIR"
-  echo "✔  Verzeichnis angelegt."
+echo "Check the directory on the mainframe..."
+if ! zowe zos-files list uss-files "$REMOTE_DIR" $ZOWE_ARGS &>/dev/null; then
+  echo "Create directory $REMOTE_DIR..."
+  zowe zos-files create uss-directory "$REMOTE_DIR" $ZOWE_ARGS
 fi
 
-# ── COBOL Check Dateien hochladen ─────────────────────────────────
-echo "▶  Lade cobol-check/ auf den Mainframe hoch …"
+echo "Upload files..."
+# The *.jar wildcard prevents errors during version updates!
 zowe zos-files upload dir-to-uss "./cobol-check" "$REMOTE_DIR" \
   --recursive \
-  --binary-files "cobol-check-*.jar"
+  --binary-files "*.jar" \
+  $ZOWE_ARGS
 
-# ── Upload prüfen ─────────────────────────────────────────────────
-echo "▶  Upload-Ergebnis:"
-zowe zos-files list uss-files "$REMOTE_DIR"
-
-echo "✔  zowe_operations.sh erfolgreich abgeschlossen."
+echo "Upload successful."

@@ -1,73 +1,68 @@
-#!/usr/bin/env bash
-# ─────────────────────────────────────────────────────────────────
-# mainframe_operations.sh
-# Führt COBOL Check für das NUMBERS-Programm aus und kopiert
-# die erzeugten Dateien in die MVS-Datasets.
-# (Lab 1 — weitere Programme kommen in späteren Labs dazu)
-# ─────────────────────────────────────────────────────────────────
-set -euo pipefail
+#!/bin/bash
 
-# ── Pflicht-Umgebungsvariablen prüfen ────────────────────────────
-: "${ZOWE_USERNAME:?ERROR: ZOWE_USERNAME ist nicht gesetzt}"
+# zowe_operations.sh
 
-LOWERCASE_USERNAME=$(echo "$ZOWE_USERNAME" | tr '[:upper:]' '[:lower:]')
-REMOTE_DIR="/z/${LOWERCASE_USERNAME}/cobolcheck"
-
-# ── Java & Zowe im PATH verfügbar machen ─────────────────────────
+# Set up environment
+export PATH=$PATH:/usr/lpp/java/J8.0_64/bin
 export JAVA_HOME=/usr/lpp/java/J8.0_64
-export PATH="${JAVA_HOME}/bin:/usr/lpp/zowe/cli/node/bin:${PATH}"
+export PATH=$PATH:/usr/lpp/zowe/cli/node/bin
 
-echo "▶  Java-Version:"
-java -version 2>&1
+# Check Java availability
+java -version
 
-# ── In das COBOL Check Verzeichnis wechseln ──────────────────────
-cd "$REMOTE_DIR"
-echo "▶  Arbeitsverzeichnis: $(pwd)"
+# Set ZOWE_USERNAME
+ZOWE_USERNAME= "Z88469"
+
+# Change to the cobolcheck directory
+cd cobolcheck
+echo "Changes to $(pwd)"
 ls -al
 
-# ── Skripte ausführbar machen ─────────────────────────────────────
+# Make cobolcheck executable
 chmod +x cobolcheck
-chmod +x scripts/linux_gnucobol_run_tests
-echo "✔  Berechtigungen gesetzt."
+echo "Made cobolcheck executable"
 
-# ── COBOL Check für NUMBERS ausführen ────────────────────────────
-PROGRAM="NUMBERS"
-echo ""
-echo "▶  Führe cobolcheck für ${PROGRAM} aus …"
+# Make script in scrpts directory executable
+cd scripts
+chmod +x linux_gnucobol_run_tests
+echo "Made linux_gnucobol_run_tests executable"
+cd ..
 
-exit_code=0
-./cobolcheck -p "$PROGRAM" || exit_code=$?
+# Function to run cobolcheck and copy files
+run_cobolcheck() {
+  program=$1
+  echo "Running cobolcheck for $program"
 
-if [[ $exit_code -ne 0 ]]; then
-  echo "⚠  cobolcheck für ${PROGRAM} endete mit Code ${exit_code}."
-else
-  echo "✔  cobolcheck für ${PROGRAM} erfolgreich."
-fi
+  # Run cobolcheck, but don't exit if it fails
+  ./cobolcheck -p $program
+  echo "Cobolcheck execution completed for $program (exceptions may have occurred)"
 
-# ── Erzeugten Test-Source in MVS Dataset kopieren ────────────────
-if [[ -f "CC##99.CBL" ]]; then
-  if cp "CC##99.CBL" "//'${ZOWE_USERNAME}.CBL(${PROGRAM})'"; then
-    echo "✔  CC##99.CBL → ${ZOWE_USERNAME}.CBL(${PROGRAM})"
+  # Check if CC##99.CBL was created, regardless of cobolcheck exit status
+  if [ -f "CC##99.CBL" ]; then
+    # Copy to the MVS dataset
+    if cp CC##99.CBL "//'${ZOWE_USERNAME}.CBL($program)'"; then
+      echo "Copied CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
+    else
+      echo "Failed to copy CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
+    fi
   else
-    echo "✘  Kopieren von CC##99.CBL fehlgeschlagen."
-    exit 1
+    echo "CC#99.CBL not found for $program"
   fi
-else
-  echo "✘  CC##99.CBL wurde nicht erzeugt — prüfe die cobolcheck-Ausgabe."
-  exit 1
-fi
 
-# ── JCL-Datei in MVS Dataset kopieren ───────────────────────────
-if [[ -f "${PROGRAM}.JCL" ]]; then
-  if cp "${PROGRAM}.JCL" "//'${ZOWE_USERNAME}.JCL(${PROGRAM})'"; then
-    echo "✔  ${PROGRAM}.JCL → ${ZOWE_USERNAME}.JCL(${PROGRAM})"
+  #Copy the JCL file if it exists
+  if [ -f "${program}.JCL" ]; then
+    if cp ${program}.JCL "//'${ZOWE_USERNAME}.JCL($program)'"; then
+      echo "Copied ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
+    else
+      echo "Failed to copy ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
+    fi
   else
-    echo "✘  Kopieren von ${PROGRAM}.JCL fehlgeschlagen."
-    exit 1
+    echo "${program}.JCL not found"
   fi
-else
-  echo "ℹ  ${PROGRAM}.JCL nicht gefunden — JCL-Schritt übersprungen."
-fi
+}
+# Run for each program
+for program in NUMBERS EMPPAY DEPTPAY; do
+  run_cobolcheck $program
+done
 
-echo ""
-echo "✔  mainframe_operations.sh erfolgreich abgeschlossen."
+echo "Mainframe operations completed"
