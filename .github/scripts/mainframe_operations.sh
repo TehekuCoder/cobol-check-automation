@@ -40,7 +40,7 @@ run_cobolcheck() {
   # Check if CC##99.CBL was created, regardless of cobolcheck exit status
   if [ -f "CC##99.CBL" ]; then
     # Copy to the MVS dataset
-    if cp CC##99.CBL "//'${ZOWE_USERNAME}.CBL{$program)'"; then
+    if cp CC##99.CBL "//'${ZOWE_USERNAME}.CBL($program)'"; then
       echo "Copied CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
     else
       echo "Failed to copy CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
