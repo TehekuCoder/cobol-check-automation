@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# zowe_operations.sh
+# mainframe_operations.sh
 
 # Set up environment
 export PATH=$PATH:/usr/lpp/java/J8.0_64/bin
@@ -11,18 +11,18 @@ export PATH=$PATH:/usr/lpp/zowe/cli/node/bin
 java -version
 
 # Set ZOWE_USERNAME
-ZOWE_USERNAME="Z88469"
+ZOWE_USERNAME="Z88469" # Replace with the actual username
 
 # Change to the cobolcheck directory
 cd cobolcheck
-echo "Changes to $(pwd)"
+echo "Changed to $(pwd)"
 ls -al
 
 # Make cobolcheck executable
 chmod +x cobolcheck
 echo "Made cobolcheck executable"
 
-# Make script in scrpts directory executable
+# Make script in scripts directory executable
 cd scripts
 chmod +x linux_gnucobol_run_tests
 echo "Made linux_gnucobol_run_tests executable"
@@ -46,10 +46,10 @@ run_cobolcheck() {
       echo "Failed to copy CC##99.CBL to ${ZOWE_USERNAME}.CBL($program)"
     fi
   else
-    echo "CC#99.CBL not found for $program"
+    echo "CC##99.CBL not found for $program"
   fi
 
-  #Copy the JCL file if it exists
+  # Copy the JCL file if it exists
   if [ -f "${program}.JCL" ]; then
     if cp ${program}.JCL "//'${ZOWE_USERNAME}.JCL($program)'"; then
       echo "Copied ${program}.JCL to ${ZOWE_USERNAME}.JCL($program)"
@@ -60,6 +60,7 @@ run_cobolcheck() {
     echo "${program}.JCL not found"
   fi
 }
+
 # Run for each program
 for program in NUMBERS EMPPAY DEPTPAY; do
   run_cobolcheck $program
