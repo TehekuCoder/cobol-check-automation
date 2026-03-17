@@ -1,39 +1,46 @@
-name: COBOL Check Automation
+name: COBOL Check Automation 2026
+
 on:
   push:
+    branches: [ main ]
+  pull_request:
     branches: [ main ]
 
 jobs:
   cobol-check:
     runs-on: ubuntu-latest
     
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Java
-      uses: actions/setup-java@v4
-      with:
-        java-version: '11'
-        distribution: 'temurin'
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20' # Zowe läuft bestens mit aktuellen LTS Node-Versionen
-      
-    - name: Install Zowe CLI
-      run: npm install -g @zowe/cli@zowe-v2-lts      
-    
-    - name: Setup Mainframe Environment and Upload COBOL Check
-      env:
-        ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
-        ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
-      run: |
-        chmod +x .github/scripts/zowe_operations.sh
-        .github/scripts/zowe_operations.sh
+    # We define the connection data centrally as environment variables
+    env:
+      ZOWE_HOST: ${{ secrets.ZOWE_HOST }}
+      ZOWE_PORT: ${{ secrets.ZOWE_PORT }}
+      ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
+      ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
 
-    - name: Run COBOL Check on Mainframe
-      env:
-        ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
-        ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
-      run: |
-        chmod +x .github/scripts/mainframe_operations.sh
-        .github/scripts/mainframe_operations.sh
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Zowe CLI
+        run: npm install -g @zowe/cli@zowe-v2-lts
+
+      - name: Setup & Upload (USS)
+        run: |
+          chmod +x .github/scripts/zowe_operations.sh
+          ./.github/scripts/zowe_operations.sh
+
+      - name: Execute Tests (Mainframe)
+        run: |
+          chmod +x .github/scripts/mainframe_operations.sh
+          ./.github/scripts/mainframe_operations.sh
