@@ -20,6 +20,6 @@ jobs:
         ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
       run: |
         chmod +x .github/scripts/zowe_operations.sh
-        .github/scripts/zowe-operations.sh
+        .github/scripts/zowe_operations.sh
         echo "Running COBOL Check"
         # Add actual cobolcheck commands here
