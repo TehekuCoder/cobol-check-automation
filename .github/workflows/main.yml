@@ -14,6 +14,14 @@ jobs:
       with:
         java-version: '11'
         distribution: 'temurin'
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20' # Zowe läuft bestens mit aktuellen LTS Node-Versionen
+      
+    - name: Install Zowe CLI
+      run: npm install -g @zowe/cli@zowe-v2-lts      
+    
     - name: Setup Mainframe Environment and Upload COBOL Check
       env:
         ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
