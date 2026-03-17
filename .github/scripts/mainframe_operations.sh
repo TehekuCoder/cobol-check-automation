@@ -1,63 +1,96 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────
 # mainframe_operations.sh
-# Purpose: Execute COBOL-Check on USS and migrate artifacts to MVS datasets
-# Usage: ./mainframe_operations.sh <USER_ID>
+# Runs COBOL Check for each program and submits the resulting
+# JCL job on the mainframe via Zowe CLI.
+# ─────────────────────────────────────────────────────────────────
+set -euo pipefail
 
-# Capture the first argument passed from the Zowe SSH command
-USER_ID=$1
+# ── Validate required environment variables ──────────────────────
+: "${ZOWE_USERNAME:?ERROR: ZOWE_USERNAME is not set}"
 
-if [ -z "$USER_ID" ]; then
-    echo "Error: No User ID provided. Usage: script.sh <USER_ID>"
-    exit 1
-fi
+LOWERCASE_USERNAME=$(echo "$ZOWE_USERNAME" | tr '[:upper:]' '[:lower:]')
+REMOTE_DIR="/z/${LOWERCASE_USERNAME}/cobolcheck"
 
-# --- Environment Setup ---
-export JAVA_HOME=/usr/lpp/java/J8.0_64
-export PATH=$PATH:$JAVA_HOME/bin
-export PATH=$PATH:/usr/lpp/zowe/cli/node/bin
+# List of programs to process (add/remove programs here)
+PROGRAMS=(NUMBERS EMPPAY DEPTPAY)
 
-# Navigate to the work directory (absolute path for reliability)
-WORKDIR="/z/$(echo $USER_ID | tr '[:upper:]' '[:lower:]')/cobolcheck"
-cd "$WORKDIR" || { echo "Error: Path $WORKDIR not found"; exit 1; }
+OVERALL_EXIT=0   # track if any program failed
 
-echo "Running in: $(pwd)"
+# ── Helper: set up Java & Zowe paths ─────────────────────────────
+setup_environment() {
+  export JAVA_HOME=/usr/lpp/java/J8.0_64
+  export PATH="${JAVA_HOME}/bin:/usr/lpp/zowe/cli/node/bin:${PATH}"
 
-# Ensure execution permissions for the tool and scripts
-chmod +x cobolcheck
-chmod +x scripts/linux_gnucobol_run_tests
-
-# --- Execution Function ---
-run_test_and_copy() {
-    prog=$1
-    echo "--------------------------------------------------"
-    echo "Processing Program: $prog"
-
-    # Run COBOL-Check
-    ./cobolcheck -p "$prog"
-
-    # Copy generated Test Driver (CC##99.CBL) to MVS Dataset
-    if [ -f "CC##99.CBL" ]; then
-        if cp "CC##99.CBL" "//'${USER_ID}.CBL($prog)'"; then
-            echo "Successfully copied Driver to ${USER_ID}.CBL($prog)"
-        else
-            echo "Failed to copy Driver to MVS"
-        fi
-    fi
-
-    # Copy JCL to MVS Dataset
-    if [ -f "${prog}.JCL" ]; then
-        if cp "${prog}.JCL" "//'${USER_ID}.JCL($prog)'"; then
-            echo "Successfully copied JCL to ${USER_ID}.JCL($prog)"
-        else
-            echo "Failed to copy JCL to MVS"
-        fi
-    fi
+  echo "▶  Java version:"
+  java -version 2>&1
 }
 
-# Run for all programs specified in the Lab
-for program in NUMBERS EMPPAY DEPTPAY; do
-    run_test_and_copy "$program"
+# ── Helper: run cobolcheck for one program ────────────────────────
+run_cobolcheck() {
+  local program="$1"
+  echo ""
+  echo "════════════════════════════════════════"
+  echo "  Processing: ${program}"
+  echo "════════════════════════════════════════"
+
+  cd "${REMOTE_DIR}"
+
+  # Make scripts executable (idempotent)
+  chmod +x cobolcheck
+  chmod +x scripts/linux_gnucobol_run_tests
+
+  # Run COBOL Check (do not abort on non-zero — capture exit code)
+  local cc_exit=0
+  ./cobolcheck -p "$program" || cc_exit=$?
+
+  if [[ $cc_exit -ne 0 ]]; then
+    echo "⚠  cobolcheck for ${program} exited with code ${cc_exit}."
+    OVERALL_EXIT=1
+  else
+    echo "✔  cobolcheck for ${program} passed."
+  fi
+
+  # ── Copy generated test source to MVS dataset ─────────────────
+  local generated_cbl="CC##99.CBL"
+  if [[ -f "$generated_cbl" ]]; then
+    if cp "$generated_cbl" "//'${ZOWE_USERNAME}.CBL(${program})'"; then
+      echo "✔  Copied ${generated_cbl} → ${ZOWE_USERNAME}.CBL(${program})"
+    else
+      echo "✘  Failed to copy ${generated_cbl} to MVS. Check dataset permissions."
+      OVERALL_EXIT=1
+    fi
+  else
+    echo "✘  ${generated_cbl} not found for ${program} — skipping copy."
+    OVERALL_EXIT=1
+  fi
+
+  # ── Copy JCL file to MVS dataset ──────────────────────────────
+  local jcl_file="${program}.JCL"
+  if [[ -f "$jcl_file" ]]; then
+    if cp "$jcl_file" "//'${ZOWE_USERNAME}.JCL(${program})'"; then
+      echo "✔  Copied ${jcl_file} → ${ZOWE_USERNAME}.JCL(${program})"
+    else
+      echo "✘  Failed to copy ${jcl_file} to MVS."
+      OVERALL_EXIT=1
+    fi
+  else
+    echo "ℹ  ${jcl_file} not found — skipping JCL copy."
+  fi
+}
+
+# ── Main ──────────────────────────────────────────────────────────
+setup_environment
+
+for program in "${PROGRAMS[@]}"; do
+  run_cobolcheck "$program"
 done
 
-echo "Mainframe operations completed."
+echo ""
+if [[ $OVERALL_EXIT -eq 0 ]]; then
+  echo "✔  All programs processed successfully."
+else
+  echo "✘  One or more programs had failures — see output above."
+fi
+
+exit $OVERALL_EXIT
