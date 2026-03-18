@@ -23,6 +23,8 @@ jobs:
         
       - name: Setup Mainframe Environment and Upload COBOL Check
         env:
+          ZOWE_HOST: ${{ secrets.ZOWE_HOST }}
+          ZOWE_PORT: ${{ secrets.ZOWE_PORT }}
           ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
           ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
         run: |
@@ -31,6 +33,8 @@ jobs:
 
       - name: Run COBOL Check on Mainframe
         env:
+          ZOWE_HOST: ${{ secrets.ZOWE_HOST }}
+          ZOWE_PORT: ${{ secrets.ZOWE_PORT }}
           ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
           ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
         run: |
