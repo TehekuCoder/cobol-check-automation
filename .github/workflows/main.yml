@@ -23,7 +23,7 @@ jobs:
       - name: Enter the host key (no interactive prompt)
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p ${{ secrets.ZOWE_PORT }} ${{ secrets.ZOWE_HOST }}
+          ssh-keyscan -p ${{ secrets.ZOWE_PORT }} ${{ secrets.ZOWE_HOST }} >> ~/.ssh/known_hosts
 
       - name: Upload COBOL check files to the mainframe (scp)
         run: |
