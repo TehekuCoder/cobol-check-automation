@@ -20,12 +20,10 @@ SSH_OPTS="-p 22 -o StrictHostKeyChecking=no -o BatchMode=no"
 echo "-> Destination: ${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}"
 
 # --- Create directory on the mainframe -------------------------
-echo "-> Check / create directory..."
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "mkdir -p '${REMOTE_DIR}'"
-echo "Directory ready."
+echo "-> Current directory: $(pwd)"
+ls -al $GITHUB_WORKSPACE/cobol-check/ 2>/dev/null || echo "cobol-check/ not found!"
 
 # --- Debug: Show what's in the current directory  -------------
-
 echo "-> Current directory: $(pwd)"
 ls -al
 echo "-> cobol-check contents:"
@@ -35,7 +33,7 @@ ls -al ./cobol-check/ 2>/dev/null || echo "cobol-check/ not found!"
 echo "-> Transfer cobol-check/ via scp..."
 sshpass -e scp -r -P 22 \
   -o StrictHostKeyChecking=no \
-  ./cobol-check \
+  $GITHUB_WORKSPACE/cobol-check \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/"
 echo "Upload complete."
 
