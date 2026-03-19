@@ -3,25 +3,23 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+
 env:
   COBOL_CHECK_VERSION: "0.2.19"
+
 jobs:
   cobol-check:
     name: Upload & Run COBOL Check on Mainframe
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Download COBOL Check
         run: |
-          echo "-> Working directory: $(pwd)"
           curl -L https://github.com/openmainframeproject/cobol-check/raw/Developer/build/distributions/cobol-check-${{ env.COBOL_CHECK_VERSION }}.zip \
             -o $GITHUB_WORKSPACE/cobol-check.zip
-          unzip $GITHUB_WORKSPACE/cobol-check.zip -d $GITHUB_WORKSPACE/cobol-check
-          echo "-> After unzip:"
-          ls -al $GITHUB_WORKSPACE/
-          ls -al $GITHUB_WORKSPACE/cobol-check/
 
       - name: Set up sshpass
         run: sudo apt-get install -y sshpass
