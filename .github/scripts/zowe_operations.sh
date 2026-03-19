@@ -24,6 +24,13 @@ echo "-> Check / create directory..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "mkdir -p '${REMOTE_DIR}'"
 echo "Directory ready."
 
+# --- Debug: Show what's in the current directory  -------------
+
+echo "-> Current directory: $(pwd)"
+ls -al
+echo "-> cobol-check contents:"
+ls -al ./cobol-check/ 2>/dev/null || echo "cobol-check/ not found!"
+
 # --- Upload COBOL Check files ----------------------------------
 echo "-> Transfer cobol-check/ via scp..."
 sshpass -e scp -r -P 22 \
