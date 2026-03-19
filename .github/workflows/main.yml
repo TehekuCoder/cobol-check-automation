@@ -18,6 +18,10 @@ jobs:
             curl -L https://github.com/openmainframeproject/cobol-check/raw/Developer/build/distributions/cobol-check-${{ env.COBOL_CHECK_VERSION }}.zip \
               -o cobol-check.zip
             unzip cobol-check.zip
+            echo "-> After unzip:"
+            ls -al
+            echo "-> cobol-check contents:"
+            ls -al cobol-check/
 
       - name: Set up sshpass
         run: sudo apt-get install -y sshpass
