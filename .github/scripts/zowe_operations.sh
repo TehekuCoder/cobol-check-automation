@@ -20,8 +20,9 @@ SSH_OPTS="-p 22 -o StrictHostKeyChecking=no -o BatchMode=no"
 echo "-> Destination: ${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}"
 
 # --- Create directory on the mainframe -------------------------
-echo "-> Current directory: $(pwd)"
-ls -al $GITHUB_WORKSPACE/cobol-check/ 2>/dev/null || echo "cobol-check/ not found!"
+echo "-> Check / create directory..."
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "mkdir -p ${REMOTE_DIR} && echo 'mkdir OK' && ls -la /z/${LOWERCASE_USERNAME}/"
+echo "Directory ready."
 
 # --- Debug: Show what's in the current directory  -------------
 echo "-> Current directory: $(pwd)"
@@ -39,6 +40,6 @@ echo "Upload complete."
 
 # --- Verify upload ---------------------------------------------
 echo "-> Content of the remote directory:"
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "ls -al '${REMOTE_DIR}'"
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "mkdir -p ${REMOTE_DIR}"
 
 echo "zowe_operations.sh completed successfully."
