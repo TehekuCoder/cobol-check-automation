@@ -3,40 +3,45 @@ name: COBOL Check Automation
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
+
+env:
+  COBOL_CHECK_VERSION: "0.2.19"
 
 jobs:
   cobol-check:
+    name: Upload & Run COBOL Check on Mainframe
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v4
-    
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
 
-      - name: Install Zowe CLI
-        run: npm install -g @zowe/cli@zowe-v2-lts
-        
-      - name: Setup Mainframe Environment and Upload COBOL Check
-        env:
-          ZOWE_HOST: ${{ secrets.ZOWE_HOST }}
-          ZOWE_PORT: ${{ secrets.ZOWE_PORT }}
-          ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
-          ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
+      - name: Set up sshpass
+        run: sudo apt-get install -y sshpass
+
+      - name: Enter the host key (no interactive prompt)
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.ZOWE_PORT }} ${{ secrets.ZOWE_HOST }}
+
+      - name: Upload COBOL check files to the mainframe (scp)
         run: |
           chmod +x .github/scripts/zowe_operations.sh
           .github/scripts/zowe_operations.sh
-
-      - name: Run COBOL Check on Mainframe
         env:
-          ZOWE_HOST: ${{ secrets.ZOWE_HOST }}
-          ZOWE_PORT: ${{ secrets.ZOWE_PORT }}
-          ZOWE_USERNAME: ${{ secrets.ZOWE_USERNAME }}
-          ZOWE_PASSWORD: ${{ secrets.ZOWE_PASSWORD }}
+          ZOWE_HOST:      ${{ secrets.ZOWE_HOST }}
+          ZOWE_PORT:      ${{ secrets.ZOWE_PORT }}
+          ZOWE_USERNAME:  ${{ secrets.ZOWE_USERNAME }}
+          ZOWE_PASSWORD:  ${{ secrets.ZOWE_PASSWORD }}
+
+      - name: Run a COBOL check on the mainframe (SSH)
         run: |
           chmod +x .github/scripts/mainframe_operations.sh
           .github/scripts/mainframe_operations.sh
+        env:
+          ZOWE_HOST:      ${{ secrets.ZOWE_HOST }}
+          ZOWE_PORT:      ${{ secrets.ZOWE_PORT }}
+          ZOWE_USERNAME:  ${{ secrets.ZOWE_USERNAME }}
+          ZOWE_PASSWORD:  ${{ secrets.ZOWE_PASSWORD }}
+          
