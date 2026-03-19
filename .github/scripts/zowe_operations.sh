@@ -34,7 +34,7 @@ ls -al ./cobol-check/ 2>/dev/null || echo "cobol-check/ not found!"
 echo "-> Transfer cobol-check/ via scp..."
 sshpass -e scp -r -P 22 \
   -o StrictHostKeyChecking=no \
-  $GITHUB_WORKSPACE/cobol-check \
+  $GITHUB_WORKSPACE/cobol-check/ \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/"
 echo "Upload complete."
 
