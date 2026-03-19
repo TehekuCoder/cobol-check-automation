@@ -6,38 +6,34 @@
 # ----------------------------------------------------------------
 set -euo pipefail
 
-# ---  Check required environment variables ----------------------
-: "${ZOWE_HOST:?ERROR: ZOWE_HOST is not set}"
-: "${ZOWE_PORT:?ERROR: ZOWE_PORT is not set}"
-: "${ZOWE_USERNAME:?ERROR: ZOWE_USERNAME is not set}"
-: "${ZOWE_PASSWORD:?ERROR: ZOWE_PASSWORD is not set}"
+# --- Check required environment variables ----------------------
+: "${SSH_HOST:?ERROR: SSH_HOST is not set}"
+: "${SSH_USERNAME:?ERROR: SSH_USERNAME is not set}"
+: "${SSH_PASSWORD:?ERROR: SSH_PASSWORD is not set}"
 
-LOWERCASE_USERNAME=$(echo "$ZOWE_USERNAME" | tr '[:upper:]' '[:lower:]')
+LOWERCASE_USERNAME=$(echo "$SSH_USERNAME" | tr '[:upper:]' '[:lower:]')
 REMOTE_DIR="/z/${LOWERCASE_USERNAME}/cobolcheck"
 
-# sshpass passes the password non-interactively
-SSHPASS="sshpass -e"   # -e reads the password from $SSHPASS (set below)
-export SSHPASS="$ZOWE_PASSWORD"
+export SSHPASS="$SSH_PASSWORD"
+SSH_OPTS="-p 22 -o StrictHostKeyChecking=no -o BatchMode=no"
 
-SSH_OPTS="-p ${ZOWE_PORT} -o StrictHostKeyChecking=no -o BatchMode=no"
+echo "-> Destination: ${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}"
 
-echo "-> Destination: ${ZOWE_USERNAME}@${ZOWE_HOST}:${REMOTE_DIR}"
-
-# --- Create a directory on the mainframe (if one does not already exist) --------
-echo "->  Check / create directory …"
-sshpass -e ssh $SSH_OPTS "${ZOWE_USERNAME}@${ZOWE_HOST}" "mkdir -p '${REMOTE_DIR}'"
+# --- Create directory on the mainframe -------------------------
+echo "-> Check / create directory..."
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "mkdir -p '${REMOTE_DIR}'"
 echo "Directory ready."
 
-# ---  Upload COBOL Check Files --------------------------------------------------
-echo "->  Transfer cobol-check/ via SCP …"
-sshpass -e scp -r -P "${ZOWE_PORT}" \
+# --- Upload COBOL Check files ----------------------------------
+echo "-> Transfer cobol-check/ via scp..."
+sshpass -e scp -r -P 22 \
   -o StrictHostKeyChecking=no \
   ./cobol-check \
-  "${ZOWE_USERNAME}@${ZOWE_HOST}:${REMOTE_DIR}/"
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/"
 echo "Upload complete."
 
-# --- Check Upload ----------------------------------------------------------------
-echo "->  Content of the remote directory:"
-sshpass -e ssh $SSH_OPTS "${ZOWE_USERNAME}@${ZOWE_HOST}" "ls -al '${REMOTE_DIR}'"
+# --- Verify upload ---------------------------------------------
+echo "-> Content of the remote directory:"
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "ls -al '${REMOTE_DIR}'"
 
 echo "zowe_operations.sh completed successfully."
