@@ -23,25 +23,23 @@ jobs:
       - name: Enter the host key (no interactive prompt)
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p ${{ secrets.ZOWE_PORT }} ${{ secrets.ZOWE_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -p 22 ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Upload COBOL check files to the mainframe (scp)
         run: |
           chmod +x .github/scripts/zowe_operations.sh
           .github/scripts/zowe_operations.sh
         env:
-          ZOWE_HOST:      ${{ secrets.ZOWE_HOST }}
-          ZOWE_PORT:      ${{ secrets.ZOWE_PORT }}
-          ZOWE_USERNAME:  ${{ secrets.ZOWE_USERNAME }}
-          ZOWE_PASSWORD:  ${{ secrets.ZOWE_PASSWORD }}
+          SSH_HOST:     ${{ secrets.SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
 
       - name: Run a COBOL check on the mainframe (SSH)
         run: |
           chmod +x .github/scripts/mainframe_operations.sh
           .github/scripts/mainframe_operations.sh
         env:
-          ZOWE_HOST:      ${{ secrets.ZOWE_HOST }}
-          ZOWE_PORT:      ${{ secrets.ZOWE_PORT }}
-          ZOWE_USERNAME:  ${{ secrets.ZOWE_USERNAME }}
-          ZOWE_PASSWORD:  ${{ secrets.ZOWE_PASSWORD }}
+          SSH_HOST:     ${{ secrets.SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
           
