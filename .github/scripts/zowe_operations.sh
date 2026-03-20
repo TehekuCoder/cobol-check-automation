@@ -25,7 +25,7 @@ mkdir -p ${REMOTE_DIR}
 mkdir -p ${REMOTE_DIR}/src/main/cobol
 mkdir -p ${REMOTE_DIR}/src/test/cobol/NUMBERS
 mkdir -p ${REMOTE_DIR}/scripts
-mkdir -p ${REMOTE_DIR}/output
+mkdir -p ${REMOTE_DIR}/testruns
 "
 echo "Directories ready."
 
@@ -39,22 +39,6 @@ sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
 echo "-> Unzipping on mainframe..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "cd ${REMOTE_DIR} && /usr/lpp/java/J8.0_64/bin/jar xf cobol-check.zip && rm cobol-check.zip"
-
-# --- Convert uploaded files to EBCDIC --------------------------
-echo "-> Converting files to EBCDIC..."
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
-iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL \
-  > ${REMOTE_DIR}/src/main/cobol/NUMBERS_TMP.CBL && \
-  mv ${REMOTE_DIR}/src/main/cobol/NUMBERS_TMP.CBL \
-     ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL
-
-iconv -f ISO8859-1 -t IBM-1047 \
-  ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut \
-  > ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_TMP.cut && \
-  mv ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_TMP.cut \
-     ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut
-"
-echo "Files converted to EBCDIC."
 
 # --- Upload COBOL source files ---------------------------------
 echo "-> Uploading source files..."
@@ -71,7 +55,26 @@ sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/NUMBERS.JCL"
 echo "Source files uploaded."
 
+# --- Convert uploaded files to EBCDIC --------------------------
+echo "-> Converting files to EBCDIC..."
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
+iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL \
+  > ${REMOTE_DIR}/src/main/cobol/NUMBERS_TMP.CBL && \
+  mv ${REMOTE_DIR}/src/main/cobol/NUMBERS_TMP.CBL \
+     ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL
 
+iconv -f ISO8859-1 -t IBM-1047 \
+  ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut \
+  > ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_TMP.cut && \
+  mv ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_TMP.cut \
+     ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut
+
+iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/NUMBERS.JCL \
+  > ${REMOTE_DIR}/NUMBERS_TMP.JCL && \
+  mv ${REMOTE_DIR}/NUMBERS_TMP.JCL \
+     ${REMOTE_DIR}/NUMBERS.JCL
+"
+echo "Files converted to EBCDIC."
 
 # --- Generate zos_run_tests script on mainframe ----------------
 echo "-> Generating zos_run_tests script..."
@@ -97,4 +100,5 @@ iconv -f IBM-1047 -t ISO8859-1 config.properties | \
 echo 'linux.process = zos_run_tests' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
 "
 echo "config.properties configured."
+
 echo "zowe_operations.sh completed successfully."
