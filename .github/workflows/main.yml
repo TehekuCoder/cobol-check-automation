@@ -46,5 +46,6 @@ jobs:
         run: |
           export SSHPASS="$SSH_PASSWORD"
           sshpass -e ssh -o StrictHostKeyChecking=no \
-            "${SSH_USERNAME}@${SSH_HOST}" 'sh -s' \
+            "${SSH_USERNAME}@${SSH_HOST}" \
+            "SSH_USERNAME=${SSH_USERNAME} sh -s" \
             < .github/scripts/mainframe_operations.sh
