@@ -40,6 +40,14 @@ echo "-> Unzipping on mainframe..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "cd ${REMOTE_DIR} && /usr/lpp/java/J8.0_64/bin/jar xf cobol-check.zip && rm cobol-check.zip"
 
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
+cd /tmp
+/usr/lpp/java/J8.0_64/bin/jar xf ${REMOTE_DIR}/bin/cobol-check-0.2.19.jar \
+  org/openmainframeproject/cobolcheck/services/platform/Platform.class
+/usr/lpp/java/J8.0_64/bin/javap -verbose \
+  org/openmainframeproject/cobolcheck/services/platform/Platform.class 2>&1
+"
+
 # --- Upload COBOL source files ---------------------------------
 echo "-> Uploading source files..."
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
