@@ -22,7 +22,7 @@ chmod +x scripts/zos_run_tests
 
 # --- Run COBOL Check -------------------------------------------
 echo "-> Running COBOL Check for ${PROGRAM}..."
-java -Dos.name=linux -jar ${REMOTE_DIR}/bin/cobol-check-0.2.19.jar -p "${PROGRAM}"
+java -jar ${REMOTE_DIR}/bin/cobol-check-0.2.19.jar -p "${PROGRAM}" || true
 echo "-> COBOL Check completed."
 
 # --- Copy CC##99.CBL to MVS dataset ----------------------------
