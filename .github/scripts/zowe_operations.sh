@@ -58,6 +58,18 @@ sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/NUMBERS.JCL"
 echo "Source files uploaded."
 
+# --- Convert NUMBERS.CBL from ASCII to EBCDIC ------------------
+echo "-> Convert NUMBERS.CBL to EBCDIC..."
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
+  "iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL > ${REMOTE_DIR}/src/main/cobol/NUMBERS_EBCDIC.CBL && mv ${REMOTE_DIR}/src/main/cobol/NUMBERS_EBCDIC.CBL ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL"
+echo "NUMBERS.CBL converted to EBCDIC."
+
+# --- Convert SymbolicRelationsTest.cut from ASCII to EBCDIC ----
+echo "-> Convert SymbolicRelationsTest.cut to EBCDIC..."
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
+  "iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut > ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_EBCDIC.cut && mv ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_EBCDIC.cut ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut"
+echo "SymbolicRelationsTest.cut converted to EBCDIC."
+
 # --- Generate zos_run_tests script on mainframe ----------------
 echo "-> Generate zos_run_tests script..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
