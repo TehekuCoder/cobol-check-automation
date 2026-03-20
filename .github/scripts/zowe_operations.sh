@@ -104,6 +104,15 @@ printf 'application.source.filename.suffix = CBL,cbl,COB,cob\n' >> config.proper
 "
 echo "config.properties created."
 
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
+  "iconv -f IBM-1047 -t ISO8859-1 ${REMOTE_DIR}/config.properties 2>/dev/null | head -20 || cat ${REMOTE_DIR}/config.properties | head -20"
+
+# --- Convert config.properties to EBCDIC ----------------------
+echo "-> Convert config.properties to EBCDIC..."
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
+  "iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/config.properties > ${REMOTE_DIR}/config_ebcdic.properties && mv ${REMOTE_DIR}/config_ebcdic.properties ${REMOTE_DIR}/config.properties"
+echo "config.properties converted to EBCDIC."
+
 # --- Verify result ---------------------------------------------
 echo "-> Content of the remote directory:"
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "ls -al ${REMOTE_DIR}"
