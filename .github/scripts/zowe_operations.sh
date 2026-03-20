@@ -57,10 +57,12 @@ chmod +x ${REMOTE_DIR}/scripts/zos_run_tests
 "
 echo "zos_run_tests script generated."
 
-# --- Set zos.process in config.properties ----------------------
-echo "-> Configure zos.process in config.properties..."
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "echo 'zos.process = zos_run_tests' >> ${REMOTE_DIR}/config.properties"
+# --- Set zos.process and unix.process in config.properties ----
+echo "-> Configure config.properties..."
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
+echo 'zos.process = zos_run_tests' >> ${REMOTE_DIR}/config.properties
+echo 'unix.process = zos_run_tests' >> ${REMOTE_DIR}/config.properties
+"
 echo "config.properties updated."
 
 # --- Verify result ---------------------------------------------
