@@ -22,7 +22,7 @@ SSH_OPTS="-p 22 -o StrictHostKeyChecking=no -o BatchMode=no"
 echo "-> Connect with ${SSH_USERNAME}@${SSH_HOST}..."
 
 # --- Execute all commands in an SSH session using heredoc ------
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" bash << REMOTE
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" zsh << REMOTE
 set -euo pipefail
 
 export JAVA_HOME=/usr/lpp/java/J8.0_64
