@@ -30,6 +30,23 @@ sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/cobol-check.zip"
 echo "Upload complete."
 
+# --- Generate zos_run_tests script on mainframe ----------------
+echo "-> Generate zos_run_tests script..."
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
+rm -f ${REMOTE_DIR}/scripts/zos_run_tests
+echo '#!/bin/sh' >> ${REMOTE_DIR}/scripts/zos_run_tests
+echo 'PROGRAM=\$1' >> ${REMOTE_DIR}/scripts/zos_run_tests
+echo 'export PATH=/usr/lpp/IBM/cobol/igyv6r4/bin:\$PATH' >> ${REMOTE_DIR}/scripts/zos_run_tests
+echo 'cob2 -o \${PROGRAM%.CBL} \$PROGRAM' >> ${REMOTE_DIR}/scripts/zos_run_tests
+echo './\${PROGRAM%.CBL}' >> ${REMOTE_DIR}/scripts/zos_run_tests
+chmod +x ${REMOTE_DIR}/scripts/zos_run_tests
+"
+
+# --- Set zos.process in config.properties ----------------------
+echo "-> Configure zos.process..."
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
+  "cd ${REMOTE_DIR} && sed 's/zos.process =/zos.process = zos_run_tests/' config.properties > config_new.properties && mv config_new.properties config.properties"
+
 # --- Unzip on mainframe using jar ------------------------------
 echo "-> Unzip on mainframe..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
