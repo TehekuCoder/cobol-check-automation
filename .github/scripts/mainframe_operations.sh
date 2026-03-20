@@ -19,6 +19,10 @@ SSH_OPTS="-p 22 -o StrictHostKeyChecking=no -o BatchMode=no"
 
 echo "-> Connect with ${SSH_USERNAME}@${SSH_HOST}..."
 
+# --- Debug: check directory structure on mainframe -------------
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
+  "ls -al ${REMOTE_DIR}/src/main/cobol/ 2>/dev/null || echo 'src/main/cobol/ not found!'"
+
 # --- Generate remote script directly on mainframe --------------
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
 rm -f ${REMOTE_DIR}/remote_cobolcheck.sh
