@@ -37,8 +37,12 @@ chmod +x ${REMOTE_DIR}/remote_cobolcheck.sh
 "
 
 # --- Check how COBOL Check reads os.name ---------------------
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "/usr/lpp/java/J8.0_64/bin/jar tf ${REMOTE_DIR}/bin/cobol-check-0.2.19.jar | grep -i launcher"
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
+cd /tmp
+/usr/lpp/java/J8.0_64/bin/jar xf ${REMOTE_DIR}/bin/cobol-check-0.2.19.jar \
+  org/openmainframeproject/cobolcheck/features/launcher/LauncherController.class
+/usr/lpp/java/J8.0_64/bin/javap -c org/openmainframeproject/cobolcheck/features/launcher/LauncherController.class 2>&1 | head -50
+"
 
 # --- Execute it on the mainframe -------------------------------
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
