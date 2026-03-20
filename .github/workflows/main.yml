@@ -38,11 +38,13 @@ jobs:
           SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
 
-      - name: Run a COBOL check on the mainframe (SSH)
-        run: |
-          chmod +x .github/scripts/mainframe_operations.sh
-          .github/scripts/mainframe_operations.sh
+      - name: Run COBOL Check on the mainframe (SSH)
         env:
           SSH_HOST:     ${{ secrets.SSH_HOST }}
           SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          export SSHPASS="$SSH_PASSWORD"
+          sshpass -e ssh -o StrictHostKeyChecking=no \
+            "${SSH_USERNAME}@${SSH_HOST}" 'sh -s' \
+            < .github/scripts/mainframe_operations.sh
