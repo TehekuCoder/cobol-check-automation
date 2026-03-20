@@ -36,6 +36,10 @@ printf 'cp \"\${PROGRAM}.JCL\" \"//\x27\${USERNAME}.JCL(\${PROGRAM})\x27\"\n' >>
 chmod +x ${REMOTE_DIR}/remote_cobolcheck.sh
 "
 
+# --- Check how COBOL Check reads os.name ---------------------
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
+  "/usr/lpp/java/J8.0_64/bin/jar tf ${REMOTE_DIR}/bin/cobol-check-0.2.19.jar | grep -i launcher"
+
 # --- Execute it on the mainframe -------------------------------
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "zsh ${REMOTE_DIR}/remote_cobolcheck.sh ${LOWERCASE_USERNAME} ${SSH_USERNAME}"
