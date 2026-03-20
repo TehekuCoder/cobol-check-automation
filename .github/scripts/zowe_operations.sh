@@ -92,7 +92,7 @@ iconv -f IBM-1047 -t ISO8859-1 config.properties | \
   sed 's|cobolcheck.test.program.path = ./testruns|cobolcheck.test.program.path = ./|' | \
   iconv -f ISO8859-1 -t IBM-1047 > config_new.properties && \
   mv config_new.properties config.properties
-echo 'zos.process = zos_run_tests' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
+echo 'linux.process = zos_run_tests' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
 "
 echo "config.properties configured."
 
