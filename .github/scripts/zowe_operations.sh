@@ -37,12 +37,21 @@ sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "cd ${REMOTE_DIR} && /usr/lpp/java/J8.0_64/bin/jar xf cobol-check.zip && rm cobol-check.zip"
 echo "Unzip complete."
 
-# --- Upload NUMBERS.JCL ----------------------------------------
-echo "-> Upload NUMBERS.JCL..."
+# --- Upload COBOL source files ---------------------------------
+echo "-> Upload NUMBERS.CBL..."
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
+  "mkdir -p ${REMOTE_DIR}/src/main/cobol ${REMOTE_DIR}/src/test/cobol/NUMBERS"
+
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
-  $GITHUB_WORKSPACE/NUMBERS.JCL \
-  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/NUMBERS.JCL"
-echo "NUMBERS.JCL uploaded."
+  $GITHUB_WORKSPACE/src/main/cobol/NUMBERS.CBL \
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL"
+
+echo "-> Upload NUMBERS test suite..."
+sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
+  $GITHUB_WORKSPACE/src/test/cobol/NUMBERS/NUMBERS.cut \
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/test/cobol/NUMBERS/NUMBERS.cut"
+
+echo "COBOL source files uploaded."
 
 # --- Generate zos_run_tests script on mainframe ----------------
 echo "-> Generate zos_run_tests script..."
