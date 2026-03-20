@@ -23,11 +23,14 @@ echo "-> Connect with ${SSH_USERNAME}@${SSH_HOST}..."
 # --- Fix line endings before upload ----------------------------
 sed -i 's/\r//' $GITHUB_WORKSPACE/.github/scripts/remote_cobolcheck.sh
 
-# --- Upload remote script (binary mode to prevent EBCDIC conversion) ---
+# --- Upload remote script --------------------------------------
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
-  -B \
   $GITHUB_WORKSPACE/.github/scripts/remote_cobolcheck.sh \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/remote_cobolcheck.sh"
+
+# --- Tag file as ASCII so z/OS does not convert it -------------
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
+  "chtag -tc ISO8859-1 ${REMOTE_DIR}/remote_cobolcheck.sh"
 
 # --- Execute it on the mainframe -------------------------------
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
