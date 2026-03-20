@@ -57,9 +57,10 @@ chmod +x ${REMOTE_DIR}/scripts/zos_run_tests
 "
 echo "zos_run_tests script generated."
 
-# --- Set zos.process and unix.process in config.properties ----
+# --- Configure config.properties -------------------------------
 echo "-> Configure config.properties..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
+echo 'cobolcheck.test.run = false' >> ${REMOTE_DIR}/config.properties
 echo 'zos.process = zos_run_tests' >> ${REMOTE_DIR}/config.properties
 echo 'unix.process = zos_run_tests' >> ${REMOTE_DIR}/config.properties
 "
