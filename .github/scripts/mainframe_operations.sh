@@ -25,6 +25,7 @@ sed -i 's/\r//' $GITHUB_WORKSPACE/.github/scripts/remote_cobolcheck.sh
 
 # --- Upload remote script --------------------------------------
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
+  -o "SendEnv=LC_ALL" \
   $GITHUB_WORKSPACE/.github/scripts/remote_cobolcheck.sh \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/remote_cobolcheck.sh"
 
