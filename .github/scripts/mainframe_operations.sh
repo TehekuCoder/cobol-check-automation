@@ -20,7 +20,7 @@ echo "-> Connect with ${SSH_USERNAME}@${SSH_HOST}..."
 
 # --- Debug config.properties -----------------------------------
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "cat ${REMOTE_DIR}/config.properties | head -50"
+  "iconv -f IBM-1047 -t ISO8859-1 ${REMOTE_DIR}/config.properties | head -50"
 
 # --- Generate remote script directly on mainframe --------------
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
