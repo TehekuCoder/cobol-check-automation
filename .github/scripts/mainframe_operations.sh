@@ -34,12 +34,14 @@ echo 'cp \"\${PROGRAM}.JCL\" \"//\x27\${USERNAME}.JCL(\${PROGRAM})\x27\"' >> ${R
 chmod +x ${REMOTE_DIR}/remote_cobolcheck.sh
 "
 
+# --- Debug: show mainframe directory structure -----------------
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
+  "echo '=== cobolcheck/ ===' && ls -al ${REMOTE_DIR}/ && echo '=== bin/ ===' && ls -al ${REMOTE_DIR}/bin/ && echo '=== scripts/ ===' && ls -al ${REMOTE_DIR}/scripts/"
+
 # --- Execute it on the mainframe -------------------------------
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "zsh ${REMOTE_DIR}/remote_cobolcheck.sh ${LOWERCASE_USERNAME} ${SSH_USERNAME}"
 
-# --- Debug: show mainframe directory structure -----------------
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "echo '=== cobolcheck/ ===' && ls -al ${REMOTE_DIR}/ && echo '=== bin/ ===' && ls -al ${REMOTE_DIR}/bin/ && echo '=== scripts/ ===' && ls -al ${REMOTE_DIR}/scripts/"
+
   
 echo "mainframe_operations.sh completed successfully."
