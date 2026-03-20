@@ -12,6 +12,7 @@ set -euo pipefail
 
 LOWERCASE_USERNAME=$(echo "$SSH_USERNAME" | tr '[:upper:]' '[:lower:]')
 REMOTE_DIR="/z/${LOWERCASE_USERNAME}/cobolcheck"
+PROGRAM="NUMBERS"
 
 export SSHPASS="$SSH_PASSWORD"
 SSH_OPTS="-p 22 -o StrictHostKeyChecking=no -o BatchMode=no"
