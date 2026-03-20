@@ -38,6 +38,11 @@ sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "cd ${REMOTE_DIR} && /usr/lpp/java/J8.0_64/bin/jar xf cobol-check.zip && rm cobol-check.zip"
 echo "Unzip complete."
 
+# --- Upload NUMBERS.JCL ----------------------------------------
+sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
+  $GITHUB_WORKSPACE/NUMBERS.JCL \
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/NUMBERS.JCL"
+
 # --- Verify result ---------------------------------------------
 echo "-> Content of the remote directory:"
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "ls -al ${REMOTE_DIR}"
