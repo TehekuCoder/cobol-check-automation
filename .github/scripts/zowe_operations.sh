@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # ----------------------------------------------------------------
 # zowe_operations.sh
-# Uploads the COBOL Check zip and NUMBERS.JCL to the
-# IBM Z Xplore Server, unpacks the zip, and configures
-# the environment for z/OS.
+# Uploads the COBOL Check zip and source files to the
+# IBM Z Xplore Server and configures the environment.
 # ----------------------------------------------------------------
 set -euo pipefail
 
@@ -19,10 +18,15 @@ SSH_OPTS="-p 22 -o StrictHostKeyChecking=no -o BatchMode=no"
 
 echo "-> Destination: ${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}"
 
-# --- Create directory on the mainframe -------------------------
-echo "-> Check / create directory..."
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "mkdir -p ${REMOTE_DIR}"
-echo "Directory ready."
+# --- Create directories on the mainframe -----------------------
+echo "-> Check / create directories..."
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
+mkdir -p ${REMOTE_DIR}
+mkdir -p ${REMOTE_DIR}/src/main/cobol
+mkdir -p ${REMOTE_DIR}/src/test/cobol/NUMBERS
+mkdir -p ${REMOTE_DIR}/testruns
+"
+echo "Directories ready."
 
 # --- Upload ZIP directly to mainframe --------------------------
 echo "-> Transfer cobol-check.zip via scp..."
@@ -39,19 +43,20 @@ echo "Unzip complete."
 
 # --- Upload COBOL source files ---------------------------------
 echo "-> Upload NUMBERS.CBL..."
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "mkdir -p ${REMOTE_DIR}/src/main/cobol ${REMOTE_DIR}/src/test/cobol/NUMBERS"
-
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
   $GITHUB_WORKSPACE/src/main/cobol/NUMBERS.CBL \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL"
 
-echo "-> Upload NUMBERS test suite..."
+echo "-> Upload NUMBERS.cut test suite..."
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
   $GITHUB_WORKSPACE/src/test/cobol/NUMBERS/NUMBERS.cut \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/test/cobol/NUMBERS/NUMBERS.cut"
 
-echo "COBOL source files uploaded."
+echo "-> Upload NUMBERS.JCL..."
+sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
+  $GITHUB_WORKSPACE/NUMBERS.JCL \
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/NUMBERS.JCL"
+echo "Source files uploaded."
 
 # --- Generate zos_run_tests script on mainframe ----------------
 echo "-> Generate zos_run_tests script..."
@@ -71,7 +76,8 @@ echo "-> Create config.properties on mainframe..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
 cd ${REMOTE_DIR}
 rm -f config.properties
-printf 'cobolcheck.test.run = false\n' > config.properties
+printf 'config.loaded = production\n' > config.properties
+printf 'cobolcheck.test.run = false\n' >> config.properties
 printf 'application.source.directory = src/main/cobol\n' >> config.properties
 printf 'test.suite.directory = src/test/cobol\n' >> config.properties
 printf 'cobolcheck.test.program.path = ./testruns\n' >> config.properties
@@ -83,7 +89,6 @@ printf 'unix.process = zos_run_tests\n' >> config.properties
 printf 'generated.files.permission.all = rx\n' >> config.properties
 printf 'concatenated.test.suites = ./testruns/ALLTESTS\n' >> config.properties
 printf 'application.source.filename.suffix = CBL,cbl,COB,cob\n' >> config.properties
-printf 'config.loaded = production\n' > config.properties
 "
 echo "config.properties created."
 
