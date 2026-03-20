@@ -17,23 +17,25 @@ SSH_OPTS="-p 22 -o StrictHostKeyChecking=no -o BatchMode=no"
 echo "-> Connect with ${SSH_USERNAME}@${SSH_HOST}..."
 
 # --- Generate remote script directly on mainframe --------------
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" << EOF
-cat > ${REMOTE_DIR}/remote_cobolcheck.sh << 'SCRIPT'
-LOWERCASE_USERNAME=\$1
-USERNAME=\$2
-REMOTE_DIR="/z/\${LOWERCASE_USERNAME}/cobolcheck"
-PROGRAM="NUMBERS"
-export JAVA_HOME=/usr/lpp/java/J8.0_64
-export PATH="\${JAVA_HOME}/bin:\${PATH}"
-cd "\${REMOTE_DIR}"
-chmod +x cobolcheck
-chmod +x scripts/linux_gnucobol_run_tests
-./cobolcheck -p "\${PROGRAM}"
-cp "CC##99.CBL" "//'\${USERNAME}.CBL(\${PROGRAM})'"
-cp "\${PROGRAM}.JCL" "//'\${USERNAME}.JCL(\${PROGRAM})'"
-SCRIPT
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
+rm -f ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'LOWERCASE_USERNAME=\$1' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'USERNAME=\$2' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'REMOTE_DIR=\"/z/\${LOWERCASE_USERNAME}/cobolcheck\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'PROGRAM=\"NUMBERS\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'export JAVA_HOME=/usr/lpp/java/J8.0_64' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'export PATH=\"\${JAVA_HOME}/bin:\${PATH}\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'cd \"\${REMOTE_DIR}\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'chmod +x cobolcheck' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'chmod +x scripts/linux_gnucobol_run_tests' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo './cobolcheck -p \"\${PROGRAM}\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'cp \"CC##99.CBL\" \"//\x27\${USERNAME}.CBL(\${PROGRAM})\x27\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'cp \"\${PROGRAM}.JCL\" \"//\x27\${USERNAME}.JCL(\${PROGRAM})\x27\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 chmod +x ${REMOTE_DIR}/remote_cobolcheck.sh
-zsh ${REMOTE_DIR}/remote_cobolcheck.sh ${LOWERCASE_USERNAME} ${SSH_USERNAME}
-EOF
+"
 
+# --- Execute it on the mainframe -------------------------------
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
+  "zsh ${REMOTE_DIR}/remote_cobolcheck.sh ${LOWERCASE_USERNAME} ${SSH_USERNAME}"
+  
 echo "mainframe_operations.sh completed successfully."
