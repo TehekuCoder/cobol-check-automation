@@ -40,8 +40,8 @@ chmod +x ${REMOTE_DIR}/remote_cobolcheck.sh
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
 cd /tmp
 /usr/lpp/java/J8.0_64/bin/jar xf ${REMOTE_DIR}/bin/cobol-check-0.2.19.jar \
-  org/openmainframeproject/cobolcheck/services/platform/PlatformLookup.class
-/usr/lpp/java/J8.0_64/bin/javap -c org/openmainframeproject/cobolcheck/services/platform/PlatformLookup.class 2>&1
+  org/openmainframeproject/cobolcheck/services/platform/Platform.class
+/usr/lpp/java/J8.0_64/bin/javap -c org/openmainframeproject/cobolcheck/services/platform/Platform.class 2>&1 | head -80
 "
 
 # --- Execute it on the mainframe -------------------------------
