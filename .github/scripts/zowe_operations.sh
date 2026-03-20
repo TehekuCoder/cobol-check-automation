@@ -74,6 +74,7 @@ printf 'unix.process = zos_run_tests\n' >> config.properties
 printf 'generated.files.permission.all = rx\n' >> config.properties
 printf 'concatenated.test.suites = ./testruns/ALLTESTS\n' >> config.properties
 printf 'application.source.filename.suffix = CBL,cbl,COB,cob\n' >> config.properties
+printf 'config.loaded = production\n' > config.properties
 "
 echo "config.properties created."
 
