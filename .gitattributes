@@ -1,9 +1,0 @@
-# Ensure all files use LF line endings
-* text=auto
-*.sh text eol=lf
-*.yml text eol=lf
-*.yaml text eol=lf
-*.properties text eol=lf
-*.JCL text eol=lf
-*.CBL text eol=lf
-*.cut text eol=lf
