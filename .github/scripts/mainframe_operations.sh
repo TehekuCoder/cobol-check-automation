@@ -26,7 +26,11 @@ java -jar ${REMOTE_DIR}/bin/cobol-check-0.2.19.jar -p "${PROGRAM}"
 echo "-> COBOL Check completed."
 
 # --- Copy CC##99.CBL to MVS dataset ----------------------------
-if [ -f "CC##99.CBL" ]; then
+if [ -f "testruns/CC##99.CBL" ]; then
+  cp "testruns/CC##99.CBL" "//'${SSH_USERNAME}.CBL(${PROGRAM})'" && \
+    echo "-> CC##99.CBL copied to ${SSH_USERNAME}.CBL(${PROGRAM})" || \
+    echo "-> Failed to copy CC##99.CBL"
+elif [ -f "CC##99.CBL" ]; then
   cp "CC##99.CBL" "//'${SSH_USERNAME}.CBL(${PROGRAM})'" && \
     echo "-> CC##99.CBL copied to ${SSH_USERNAME}.CBL(${PROGRAM})" || \
     echo "-> Failed to copy CC##99.CBL"
