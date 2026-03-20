@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+# remote_cobolcheck.sh
 
 export JAVA_HOME=/usr/lpp/java/J8.0_64
 export PATH="${JAVA_HOME}/bin:${PATH}"
