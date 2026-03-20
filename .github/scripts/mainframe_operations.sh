@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # -----------------------------------------------------------------
 # mainframe_operations.sh
+# Runs a COBOL check for the NUMBERS program via SSH on the
+# IBM Z Xplore Server and copies the results to the MVS datasets.
 # -----------------------------------------------------------------
 set -euo pipefail
 
@@ -19,26 +21,23 @@ echo "-> Connect with ${SSH_USERNAME}@${SSH_HOST}..."
 # --- Generate remote script directly on mainframe --------------
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
 rm -f ${REMOTE_DIR}/remote_cobolcheck.sh
-echo 'LOWERCASE_USERNAME=$1' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-echo 'USERNAME=$2' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-echo 'REMOTE_DIR="/z/${LOWERCASE_USERNAME}/cobolcheck"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-echo 'PROGRAM="NUMBERS"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'LOWERCASE_USERNAME=\$1' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'USERNAME=\$2' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'REMOTE_DIR=\"/z/\${LOWERCASE_USERNAME}/cobolcheck\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'PROGRAM=\"NUMBERS\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 echo 'export JAVA_HOME=/usr/lpp/java/J8.0_64' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-echo 'export PATH="${JAVA_HOME}/bin:${PATH}"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-echo 'cd "${REMOTE_DIR}"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'export PATH=\"\${JAVA_HOME}/bin:\${PATH}\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'cd \"\${REMOTE_DIR}\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 echo 'chmod +x scripts/linux_gnucobol_run_tests' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-echo 'java -jar ${REMOTE_DIR}/bin/cobol-check-0.2.19.jar -p "${PROGRAM}"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-echo 'cp "CC##99.CBL" "//${USERNAME}.CBL(${PROGRAM})"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-echo 'cp "${PROGRAM}.JCL" "//${USERNAME}.JCL(${PROGRAM})"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-
-# --- Debug: show mainframe directory structure -----------------
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "echo '=== cobolcheck/ ===' && ls -al ${REMOTE_DIR}/ && echo '=== bin/ ===' && ls -al ${REMOTE_DIR}/bin/ && echo '=== scripts/ ===' && ls -al ${REMOTE_DIR}/scripts/"
+echo 'java -jar \${REMOTE_DIR}/bin/cobol-check-0.2.19.jar -p \"\${PROGRAM}\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'cp \"CC##99.CBL\" \"//\x27\${USERNAME}.CBL(\${PROGRAM})\x27\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'cp \"\${PROGRAM}.JCL\" \"//\x27\${USERNAME}.JCL(\${PROGRAM})\x27\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+chmod +x ${REMOTE_DIR}/remote_cobolcheck.sh
+"
 
 # --- Execute it on the mainframe -------------------------------
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "zsh ${REMOTE_DIR}/remote_cobolcheck.sh ${LOWERCASE_USERNAME} ${SSH_USERNAME}"
 
-
-  
 echo "mainframe_operations.sh completed successfully."
+```
