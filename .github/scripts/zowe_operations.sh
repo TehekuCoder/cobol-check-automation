@@ -96,4 +96,13 @@ echo 'zos.process = zos_run_tests' | iconv -f ISO8859-1 -t IBM-1047 >> config.pr
 "
 echo "config.properties configured."
 
+# --- Dekompiliere Launcher -------------------------------------
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
+cd /tmp
+/usr/lpp/java/J8.0_64/bin/jar xf ${REMOTE_DIR}/bin/cobol-check-0.2.19.jar \
+  org/openmainframeproject/cobolcheck/features/launcher/Launcher.class
+/usr/lpp/java/J8.0_64/bin/javap -c \
+  org/openmainframeproject/cobolcheck/features/launcher/Launcher.class 2>&1
+"
+
 echo "zowe_operations.sh completed successfully."
