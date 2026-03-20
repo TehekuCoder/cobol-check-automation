@@ -39,25 +39,13 @@ else
   exit 1
 fi
 
-# --- Convert uploaded files to EBCDIC --------------------------
-echo "-> Converting files to EBCDIC..."
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
-iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL \
-  > ${REMOTE_DIR}/src/main/cobol/NUMBERS_TMP.CBL && \
-  mv ${REMOTE_DIR}/src/main/cobol/NUMBERS_TMP.CBL \
-     ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL
-
-iconv -f ISO8859-1 -t IBM-1047 \
-  ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut \
-  > ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_TMP.cut && \
-  mv ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_TMP.cut \
-     ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut
-
-iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/NUMBERS.JCL \
-  > ${REMOTE_DIR}/NUMBERS_TMP.JCL && \
-  mv ${REMOTE_DIR}/NUMBERS_TMP.JCL \
-     ${REMOTE_DIR}/NUMBERS.JCL
-"
-echo "Files converted to EBCDIC."
+# --- Submit JCL directly from USS ------------------------------
+if [ -f "${PROGRAM}.JCL" ]; then
+  submit "${PROGRAM}.JCL" && \
+    echo "-> ${PROGRAM}.JCL submitted successfully" || \
+    echo "-> Failed to submit ${PROGRAM}.JCL"
+else
+  echo "-> ${PROGRAM}.JCL not found — JCL step skipped."
+fi
 
 echo "mainframe_operations.sh completed successfully."
