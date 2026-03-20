@@ -73,7 +73,10 @@ echo "SymbolicRelationsTest.cut converted to EBCDIC."
 # --- Generate zos_run_tests script on mainframe ----------------
 echo "-> Generate zos_run_tests script..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
-rm -f ${REMOTE_DIR}/scripts/zos_run_tests
+cd ${REMOTE_DIR}
+printf 'z/os.process = zos_run_tests\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
+printf 'cobolcheck.test.run = false\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
+"
 echo '#!/bin/sh' >> ${REMOTE_DIR}/scripts/zos_run_tests
 echo 'PROGRAM=\$1' >> ${REMOTE_DIR}/scripts/zos_run_tests
 echo 'export PATH=/usr/lpp/IBM/cobol/igyv6r4/bin:\$PATH' >> ${REMOTE_DIR}/scripts/zos_run_tests
