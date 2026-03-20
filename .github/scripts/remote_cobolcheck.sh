@@ -24,7 +24,7 @@ echo "-> Run cobolcheck for ${PROGRAM}..."
 
 if [[ -f "CC##99.CBL" ]]; then
   cp "CC##99.CBL" "//'${USERNAME}.CBL(${PROGRAM})'"
-  echo 'cp \"testruns/CC##99.CBL\" \"//\x27\${USERNAME}.CBL(\${PROGRAM})\x27\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+  echo 'cp \"CC##99.CBL\" \"//\x27\${USERNAME}.CBL(\${PROGRAM})\x27\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 else
   echo "CC##99.CBL not found."
   exit 1
