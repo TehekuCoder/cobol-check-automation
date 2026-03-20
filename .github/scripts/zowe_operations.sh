@@ -92,9 +92,6 @@ printf 'cobolcheck.test.run = false\n' | iconv -f ISO8859-1 -t IBM-1047 >> confi
 echo "config.properties updated."
 
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "iconv -f IBM-1047 -t ISO8859-1 ${REMOTE_DIR}/config.properties | grep 'test.run'"
-
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "iconv -f IBM-1047 -t ISO8859-1 ${REMOTE_DIR}/config.properties 2>/dev/null | head -20 || cat ${REMOTE_DIR}/config.properties | head -20"
 
 # --- Convert config.properties to EBCDIC ----------------------
