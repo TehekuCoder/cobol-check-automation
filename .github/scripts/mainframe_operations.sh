@@ -18,10 +18,6 @@ SSH_OPTS="-p 22 -o StrictHostKeyChecking=no -o BatchMode=no"
 
 echo "-> Connect with ${SSH_USERNAME}@${SSH_HOST}..."
 
-# --- Debug config.properties -----------------------------------
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "iconv -f IBM-1047 -t ISO8859-1 ${REMOTE_DIR}/config.properties | head -50"
-
 # --- Generate remote script directly on mainframe --------------
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
 rm -f ${REMOTE_DIR}/remote_cobolcheck.sh
@@ -33,6 +29,7 @@ echo 'export JAVA_HOME=/usr/lpp/java/J8.0_64' >> ${REMOTE_DIR}/remote_cobolcheck
 echo 'export PATH=\"\${JAVA_HOME}/bin:\${PATH}\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 echo 'cd \"\${REMOTE_DIR}\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 echo 'chmod +x scripts/linux_gnucobol_run_tests' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'chmod +x scripts/zos_run_tests' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 echo 'java -jar \${REMOTE_DIR}/bin/cobol-check-0.2.19.jar -p \"\${PROGRAM}\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 echo 'cp \"testruns/CC##99.CBL\" \"//\x27\${USERNAME}.CBL(\${PROGRAM})\x27\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 echo 'cp \"\${PROGRAM}.JCL\" \"//\x27\${USERNAME}.JCL(\${PROGRAM})\x27\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
@@ -44,4 +41,3 @@ sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "zsh ${REMOTE_DIR}/remote_cobolcheck.sh ${LOWERCASE_USERNAME} ${SSH_USERNAME}"
 
 echo "mainframe_operations.sh completed successfully."
-```
