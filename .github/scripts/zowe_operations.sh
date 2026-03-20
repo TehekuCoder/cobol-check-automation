@@ -40,14 +40,6 @@ echo "-> Unzipping on mainframe..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "cd ${REMOTE_DIR} && /usr/lpp/java/J8.0_64/bin/jar xf cobol-check.zip && rm cobol-check.zip"
 
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
-cd /tmp
-/usr/lpp/java/J8.0_64/bin/jar xf ${REMOTE_DIR}/bin/cobol-check-0.2.19.jar \
-  org/openmainframeproject/cobolcheck/features/launcher/Launcher.class
-/usr/lpp/java/J8.0_64/bin/javap -verbose \
-  org/openmainframeproject/cobolcheck/features/launcher/Launcher.class 2>&1 | grep -A5 'ZOS\|zos\|process\|prefix\|Key'
-"
-
 # --- Upload COBOL source files ---------------------------------
 echo "-> Uploading source files..."
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
@@ -79,6 +71,19 @@ iconv -f ISO8859-1 -t IBM-1047 \
 "
 echo "Files converted to EBCDIC."
 
+# --- Generate zos_run_tests script on mainframe ----------------
+echo "-> Generating zos_run_tests script..."
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
+rm -f ${REMOTE_DIR}/scripts/zos_run_tests
+echo '#!/bin/sh' > ${REMOTE_DIR}/scripts/zos_run_tests
+echo 'PROGRAM=\$1' >> ${REMOTE_DIR}/scripts/zos_run_tests
+echo 'export PATH=/usr/lpp/IBM/cobol/igyv6r4/bin:\$PATH' >> ${REMOTE_DIR}/scripts/zos_run_tests
+echo 'cob2 -o \${PROGRAM%.CBL} \$PROGRAM' >> ${REMOTE_DIR}/scripts/zos_run_tests
+echo './\${PROGRAM%.CBL}' >> ${REMOTE_DIR}/scripts/zos_run_tests
+chmod +x ${REMOTE_DIR}/scripts/zos_run_tests
+"
+echo "zos_run_tests script generated."
+
 # --- Configure config.properties -------------------------------
 echo "-> Configuring config.properties..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
@@ -87,21 +92,8 @@ iconv -f IBM-1047 -t ISO8859-1 config.properties | \
   sed 's|cobolcheck.test.program.path = ./testruns|cobolcheck.test.program.path = ./|' | \
   iconv -f ISO8859-1 -t IBM-1047 > config_new.properties && \
   mv config_new.properties config.properties
-printf 'zos.process = zos_run_tests\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
+echo 'zos.process = zos_run_tests' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
 "
 echo "config.properties configured."
-
-# --- Generate zos_run_tests script on mainframe ----------------
-echo "-> Generating zos_run_tests script..."
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
-rm -f ${REMOTE_DIR}/scripts/zos_run_tests
-printf '#!/bin/sh\n' >> ${REMOTE_DIR}/scripts/zos_run_tests
-printf 'PROGRAM=\$1\n' >> ${REMOTE_DIR}/scripts/zos_run_tests
-printf 'export PATH=/usr/lpp/IBM/cobol/igyv6r4/bin:\$PATH\n' >> ${REMOTE_DIR}/scripts/zos_run_tests
-printf 'cob2 -o \${PROGRAM%.CBL} \$PROGRAM\n' >> ${REMOTE_DIR}/scripts/zos_run_tests
-printf './\${PROGRAM%.CBL}\n' >> ${REMOTE_DIR}/scripts/zos_run_tests
-chmod +x ${REMOTE_DIR}/scripts/zos_run_tests
-"
-echo "zos_run_tests script generated."
 
 echo "zowe_operations.sh completed successfully."
