@@ -83,26 +83,15 @@ chmod +x ${REMOTE_DIR}/scripts/zos_run_tests
 "
 echo "zos_run_tests script generated."
 
-# --- Create new config.properties on mainframe -----------------
-echo "-> Create config.properties on mainframe..."
+# --- Configure config.properties -------------------------------
+echo "-> Configure config.properties..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
 cd ${REMOTE_DIR}
-rm -f config.properties
-printf 'config.loaded = production\n' > config.properties
-printf 'cobolcheck.test.run = false\n' >> config.properties
-printf 'application.source.directory = src/main/cobol\n' >> config.properties
-printf 'test.suite.directory = src/test/cobol\n' >> config.properties
-printf 'cobolcheck.test.program.path = ./testruns\n' >> config.properties
-printf 'cobolcheck.test.program.name = CC##99.CBL\n' >> config.properties
-printf 'cobolcheck.prefix = UT-\n' >> config.properties
-printf 'cobolcheck.script.directory = scripts\n' >> config.properties
-printf 'zos.process = zos_run_tests\n' >> config.properties
-printf 'unix.process = zos_run_tests\n' >> config.properties
-printf 'generated.files.permission.all = rx\n' >> config.properties
-printf 'concatenated.test.suites = ./testruns/ALLTESTS\n' >> config.properties
-printf 'application.source.filename.suffix = CBL,cbl,COB,cob\n' >> config.properties
+printf 'cobolcheck.test.run = false\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
+printf 'unix.process = zos_run_tests\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
+printf 'zos.process = zos_run_tests\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
 "
-echo "config.properties created."
+echo "config.properties updated."
 
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "iconv -f IBM-1047 -t ISO8859-1 ${REMOTE_DIR}/config.properties 2>/dev/null | head -20 || cat ${REMOTE_DIR}/config.properties | head -20"
