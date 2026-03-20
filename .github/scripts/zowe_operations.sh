@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ----------------------------------------------------------------
 # zowe_operations.sh
-# Transfers the COBOL check files to the
-# IBM Z Xplore Server via scp and creates the working directory.
+# Transfers the COBOL Check zip to the
+# IBM Z Xplore Server via scp and unzips it there.
 # ----------------------------------------------------------------
 set -euo pipefail
 
@@ -21,25 +21,25 @@ echo "-> Destination: ${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}"
 
 # --- Create directory on the mainframe -------------------------
 echo "-> Check / create directory..."
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "mkdir -p ${REMOTE_DIR} && echo 'mkdir OK' && ls -la /z/${LOWERCASE_USERNAME}/"
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "mkdir -p ${REMOTE_DIR}"
 echo "Directory ready."
 
-# --- Debug: Show what's in the current directory  -------------
-echo "-> Current directory: $(pwd)"
-ls -al
-echo "-> cobol-check contents:"
-ls -al ./cobol-check/ 2>/dev/null || echo "cobol-check/ not found!"
-
-# --- Upload COBOL Check files ----------------------------------
-echo "-> Transfer cobol-check/ via scp..."
-sshpass -e scp -r -P 22 \
+# --- Upload ZIP directly to mainframe --------------------------
+echo "-> Transfer cobol-check.zip via scp..."
+sshpass -e scp -P 22 \
   -o StrictHostKeyChecking=no \
-  $GITHUB_WORKSPACE/cobol-check/ \
-  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/"
+  $GITHUB_WORKSPACE/cobol-check.zip \
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/cobol-check.zip"
 echo "Upload complete."
 
-# --- Verify upload ---------------------------------------------
+# --- Unzip on mainframe ----------------------------------------
+echo "-> Unzip on mainframe..."
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
+  "cd ${REMOTE_DIR} && unzip -o cobol-check.zip && rm cobol-check.zip"
+echo "Unzip complete."
+
+# --- Verify result ---------------------------------------------
 echo "-> Content of the remote directory:"
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "mkdir -p ${REMOTE_DIR}"
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "ls -al ${REMOTE_DIR}"
 
 echo "zowe_operations.sh completed successfully."
