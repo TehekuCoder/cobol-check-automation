@@ -43,9 +43,9 @@ sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
 cd /tmp
 /usr/lpp/java/J8.0_64/bin/jar xf ${REMOTE_DIR}/bin/cobol-check-0.2.19.jar \
-  org/openmainframeproject/cobolcheck/services/platform/Platform.class
+  org/openmainframeproject/cobolcheck/features/launcher/Launcher.class
 /usr/lpp/java/J8.0_64/bin/javap -verbose \
-  org/openmainframeproject/cobolcheck/services/platform/Platform.class 2>&1
+  org/openmainframeproject/cobolcheck/features/launcher/Launcher.class 2>&1 | grep -A5 'ZOS\|zos\|process\|prefix\|Key'
 "
 
 # --- Upload COBOL source files ---------------------------------
