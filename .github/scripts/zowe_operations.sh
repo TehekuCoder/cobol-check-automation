@@ -19,95 +19,81 @@ SSH_OPTS="-p 22 -o StrictHostKeyChecking=no -o BatchMode=no"
 echo "-> Destination: ${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}"
 
 # --- Create directories on the mainframe -----------------------
-echo "-> Check / create directories..."
+echo "-> Creating directories..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
 mkdir -p ${REMOTE_DIR}
 mkdir -p ${REMOTE_DIR}/src/main/cobol
 mkdir -p ${REMOTE_DIR}/src/test/cobol/NUMBERS
 mkdir -p ${REMOTE_DIR}/testruns
+mkdir -p ${REMOTE_DIR}/scripts
 "
 echo "Directories ready."
 
 # --- Upload ZIP directly to mainframe --------------------------
-echo "-> Transfer cobol-check.zip via scp..."
+echo "-> Uploading cobol-check.zip..."
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
   $GITHUB_WORKSPACE/cobol-check.zip \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/cobol-check.zip"
-echo "Upload complete."
 
 # --- Unzip on mainframe using jar ------------------------------
-echo "-> Unzip on mainframe..."
+echo "-> Unzipping on mainframe..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "cd ${REMOTE_DIR} && /usr/lpp/java/J8.0_64/bin/jar xf cobol-check.zip && rm cobol-check.zip"
-echo "Unzip complete."
 
 # --- Upload COBOL source files ---------------------------------
-echo "-> Upload NUMBERS.CBL..."
+echo "-> Uploading source files..."
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
   $GITHUB_WORKSPACE/src/main/cobol/NUMBERS.CBL \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL"
 
-echo "-> Upload NUMBERS.cut test suite..."
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
   $GITHUB_WORKSPACE/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut"
 
-echo "-> Upload NUMBERS.JCL..."
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
   $GITHUB_WORKSPACE/NUMBERS.JCL \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/NUMBERS.JCL"
 echo "Source files uploaded."
 
-# --- Convert NUMBERS.CBL from ASCII to EBCDIC ------------------
-echo "-> Convert NUMBERS.CBL to EBCDIC..."
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL > ${REMOTE_DIR}/src/main/cobol/NUMBERS_EBCDIC.CBL && mv ${REMOTE_DIR}/src/main/cobol/NUMBERS_EBCDIC.CBL ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL"
-echo "NUMBERS.CBL converted to EBCDIC."
+# --- Convert uploaded files to EBCDIC --------------------------
+echo "-> Converting files to EBCDIC..."
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
+iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL \
+  > ${REMOTE_DIR}/src/main/cobol/NUMBERS_TMP.CBL && \
+  mv ${REMOTE_DIR}/src/main/cobol/NUMBERS_TMP.CBL \
+     ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL
 
-# --- Convert SymbolicRelationsTest.cut from ASCII to EBCDIC ----
-echo "-> Convert SymbolicRelationsTest.cut to EBCDIC..."
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut > ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_EBCDIC.cut && mv ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_EBCDIC.cut ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut"
-echo "SymbolicRelationsTest.cut converted to EBCDIC."
+iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut \
+  > ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_TMP.cut && \
+  mv ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_TMP.cut \
+     ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut
+"
+echo "Files converted to EBCDIC."
 
 # --- Generate zos_run_tests script on mainframe ----------------
-echo "-> Generate zos_run_tests script..."
+echo "-> Generating zos_run_tests script..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
-cd ${REMOTE_DIR}
-printf 'z/os.process = zos_run_tests\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
-printf 'cobolcheck.test.run = false\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
-"
-echo '#!/bin/sh' >> ${REMOTE_DIR}/scripts/zos_run_tests
-echo 'PROGRAM=\$1' >> ${REMOTE_DIR}/scripts/zos_run_tests
-echo 'export PATH=/usr/lpp/IBM/cobol/igyv6r4/bin:\$PATH' >> ${REMOTE_DIR}/scripts/zos_run_tests
-echo 'cob2 -o \${PROGRAM%.CBL} \$PROGRAM' >> ${REMOTE_DIR}/scripts/zos_run_tests
-echo './\${PROGRAM%.CBL}' >> ${REMOTE_DIR}/scripts/zos_run_tests
+rm -f ${REMOTE_DIR}/scripts/zos_run_tests
+printf '#!/bin/sh\n' >> ${REMOTE_DIR}/scripts/zos_run_tests
+printf 'PROGRAM=\$1\n' >> ${REMOTE_DIR}/scripts/zos_run_tests
+printf 'export PATH=/usr/lpp/IBM/cobol/igyv6r4/bin:\$PATH\n' >> ${REMOTE_DIR}/scripts/zos_run_tests
+printf 'cob2 -o \${PROGRAM%.CBL} \$PROGRAM\n' >> ${REMOTE_DIR}/scripts/zos_run_tests
+printf './\${PROGRAM%.CBL}\n' >> ${REMOTE_DIR}/scripts/zos_run_tests
 chmod +x ${REMOTE_DIR}/scripts/zos_run_tests
 "
 echo "zos_run_tests script generated."
 
 # --- Configure config.properties -------------------------------
-echo "-> Configure config.properties..."
+echo "-> Configuring config.properties..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
 cd ${REMOTE_DIR}
 iconv -f IBM-1047 -t ISO8859-1 config.properties | \
   sed 's/cobolcheck.test.run = true/cobolcheck.test.run = false/' | \
   iconv -f ISO8859-1 -t IBM-1047 > config_new.properties && \
   mv config_new.properties config.properties
+printf 'z/os.process = zos_run_tests\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
+printf 'zos.process = zos_run_tests\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
 "
-echo "config.properties updated."
-
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "iconv -f IBM-1047 -t ISO8859-1 ${REMOTE_DIR}/config.properties 2>/dev/null | head -20 || cat ${REMOTE_DIR}/config.properties | head -20"
-
-# --- Convert config.properties to EBCDIC ----------------------
-echo "-> Convert config.properties to EBCDIC..."
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/config.properties > ${REMOTE_DIR}/config_ebcdic.properties && mv ${REMOTE_DIR}/config_ebcdic.properties ${REMOTE_DIR}/config.properties"
-echo "config.properties converted to EBCDIC."
-
-# --- Verify result ---------------------------------------------
-echo "-> Content of the remote directory:"
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "ls -al ${REMOTE_DIR}"
+echo "config.properties configured."
 
 echo "zowe_operations.sh completed successfully."
