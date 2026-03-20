@@ -20,7 +20,7 @@ echo "-> Connect with ${SSH_USERNAME}@${SSH_HOST}..."
 
 # --- Debug config.properties -----------------------------------
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "grep -i 'compiler\|cobol\|launcher\|script' ${REMOTE_DIR}/config.properties | head -20"
+  "cat ${REMOTE_DIR}/config.properties | head -50"
 
 # --- Generate remote script directly on mainframe --------------
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
@@ -34,7 +34,7 @@ echo 'export PATH=\"\${JAVA_HOME}/bin:\${PATH}\"' >> ${REMOTE_DIR}/remote_cobolc
 echo 'cd \"\${REMOTE_DIR}\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 echo 'chmod +x scripts/linux_gnucobol_run_tests' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 echo 'java -jar \${REMOTE_DIR}/bin/cobol-check-0.2.19.jar -p \"\${PROGRAM}\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-echo 'cp \"CC##99.CBL\" \"//\x27\${USERNAME}.CBL(\${PROGRAM})\x27\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'cp \"testruns/CC##99.CBL\" \"//\x27\${USERNAME}.CBL(\${PROGRAM})\x27\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 echo 'cp \"\${PROGRAM}.JCL\" \"//\x27\${USERNAME}.JCL(\${PROGRAM})\x27\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 chmod +x ${REMOTE_DIR}/remote_cobolcheck.sh
 "
