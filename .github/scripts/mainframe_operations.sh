@@ -18,6 +18,10 @@ SSH_OPTS="-p 22 -o StrictHostKeyChecking=no -o BatchMode=no"
 
 echo "-> Connect with ${SSH_USERNAME}@${SSH_HOST}..."
 
+# --- Debug config.properties -----------------------------------
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
+  "grep -i 'compiler\|cobol\|launcher\|script' ${REMOTE_DIR}/config.properties | head -20"
+
 # --- Generate remote script directly on mainframe --------------
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
 rm -f ${REMOTE_DIR}/remote_cobolcheck.sh
