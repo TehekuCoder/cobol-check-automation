@@ -57,14 +57,25 @@ chmod +x ${REMOTE_DIR}/scripts/zos_run_tests
 "
 echo "zos_run_tests script generated."
 
-# --- Configure config.properties -------------------------------
-echo "-> Configure config.properties..."
+# --- Create new config.properties on mainframe -----------------
+echo "-> Create config.properties on mainframe..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
-echo 'cobolcheck.test.run = false' >> ${REMOTE_DIR}/config.properties
-echo 'zos.process = zos_run_tests' >> ${REMOTE_DIR}/config.properties
-echo 'unix.process = zos_run_tests' >> ${REMOTE_DIR}/config.properties
+cd ${REMOTE_DIR}
+rm -f config.properties
+printf 'cobolcheck.test.run = false\n' > config.properties
+printf 'application.source.directory = src/main/cobol\n' >> config.properties
+printf 'test.suite.directory = src/test/cobol\n' >> config.properties
+printf 'cobolcheck.test.program.path = ./testruns\n' >> config.properties
+printf 'cobolcheck.test.program.name = CC##99.CBL\n' >> config.properties
+printf 'cobolcheck.prefix = UT-\n' >> config.properties
+printf 'cobolcheck.script.directory = scripts\n' >> config.properties
+printf 'zos.process = zos_run_tests\n' >> config.properties
+printf 'unix.process = zos_run_tests\n' >> config.properties
+printf 'generated.files.permission.all = rx\n' >> config.properties
+printf 'concatenated.test.suites = ./testruns/ALLTESTS\n' >> config.properties
+printf 'application.source.filename.suffix = CBL,cbl,COB,cob\n' >> config.properties
 "
-echo "config.properties updated."
+echo "config.properties created."
 
 # --- Verify result ---------------------------------------------
 echo "-> Content of the remote directory:"
