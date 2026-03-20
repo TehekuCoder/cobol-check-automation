@@ -63,6 +63,10 @@ sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "cd ${REMOTE_DIR} && sed 's/zos.process =/zos.process = zos_run_tests/' config.properties > config_new.properties && mv config_new.properties config.properties"
 echo "config.properties updated."
 
+# --- Verify config.properties ----------------------------------
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
+  "iconv -f IBM-1047 -t ISO8859-1 ${REMOTE_DIR}/config.properties | grep 'zos.process'"
+
 # --- Verify result ---------------------------------------------
 echo "-> Content of the remote directory:"
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "ls -al ${REMOTE_DIR}"
