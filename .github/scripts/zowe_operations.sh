@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 # ----------------------------------------------------------------
 # zowe_operations.sh
-# Transfers the COBOL Check zip to the
-# IBM Z Xplore Server via scp and unzips it there.
+# Uploads the COBOL Check zip and NUMBERS.JCL to the
+# IBM Z Xplore Server and unpacks the zip there.
 # ----------------------------------------------------------------
 set -euo pipefail
 
-# --- Check required environment variables ----------------------
 : "${SSH_HOST:?ERROR: SSH_HOST is not set}"
 : "${SSH_USERNAME:?ERROR: SSH_USERNAME is not set}"
 : "${SSH_PASSWORD:?ERROR: SSH_PASSWORD is not set}"
@@ -26,22 +25,23 @@ echo "Directory ready."
 
 # --- Upload ZIP directly to mainframe --------------------------
 echo "-> Transfer cobol-check.zip via scp..."
-sshpass -e scp -P 22 \
-  -o StrictHostKeyChecking=no \
+sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
   $GITHUB_WORKSPACE/cobol-check.zip \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/cobol-check.zip"
 echo "Upload complete."
 
-# --- Unzip on mainframe ----------------------------------------
+# --- Unzip on mainframe using jar ------------------------------
 echo "-> Unzip on mainframe..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "cd ${REMOTE_DIR} && /usr/lpp/java/J8.0_64/bin/jar xf cobol-check.zip && rm cobol-check.zip"
 echo "Unzip complete."
 
 # --- Upload NUMBERS.JCL ----------------------------------------
+echo "-> Upload NUMBERS.JCL..."
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
   $GITHUB_WORKSPACE/NUMBERS.JCL \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/NUMBERS.JCL"
+echo "NUMBERS.JCL uploaded."
 
 # --- Verify result ---------------------------------------------
 echo "-> Content of the remote directory:"
