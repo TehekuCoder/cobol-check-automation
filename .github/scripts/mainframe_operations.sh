@@ -27,6 +27,6 @@ sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
 
 # --- Execute it on the mainframe -------------------------------
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "chmod +x ${REMOTE_DIR}/remote_cobolcheck.sh && zsh ${REMOTE_DIR}/remote_cobolcheck.sh ${LOWERCASE_USERNAME} ${SSH_USERNAME}"
+  "chmod +x ${REMOTE_DIR}/remote_cobolcheck.sh && sed -i 's/\r//' ${REMOTE_DIR}/remote_cobolcheck.sh && zsh ${REMOTE_DIR}/remote_cobolcheck.sh ${LOWERCASE_USERNAME} ${SSH_USERNAME}"
 
 echo "mainframe_operations.sh completed successfully."
