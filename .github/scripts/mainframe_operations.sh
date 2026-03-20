@@ -23,9 +23,9 @@ echo "-> Connect with ${SSH_USERNAME}@${SSH_HOST}..."
 # --- Fix line endings before upload ----------------------------
 sed -i 's/\r//' $GITHUB_WORKSPACE/.github/scripts/remote_cobolcheck.sh
 
-# --- Upload remote script --------------------------------------
+# --- Upload remote script (binary mode to prevent EBCDIC conversion) ---
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
-  -o "SendEnv=LC_ALL" \
+  -B \
   $GITHUB_WORKSPACE/.github/scripts/remote_cobolcheck.sh \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/remote_cobolcheck.sh"
 
