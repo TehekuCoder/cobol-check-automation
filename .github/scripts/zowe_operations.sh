@@ -24,8 +24,8 @@ sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
 mkdir -p ${REMOTE_DIR}
 mkdir -p ${REMOTE_DIR}/src/main/cobol
 mkdir -p ${REMOTE_DIR}/src/test/cobol/NUMBERS
-mkdir -p ${REMOTE_DIR}/testruns
 mkdir -p ${REMOTE_DIR}/scripts
+mkdir -p ${REMOTE_DIR}/output
 "
 echo "Directories ready."
 
@@ -63,12 +63,25 @@ iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL \
   mv ${REMOTE_DIR}/src/main/cobol/NUMBERS_TMP.CBL \
      ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL
 
-iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut \
+iconv -f ISO8859-1 -t IBM-1047 \
+  ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut \
   > ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_TMP.cut && \
   mv ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_TMP.cut \
      ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut
 "
 echo "Files converted to EBCDIC."
+
+# --- Configure config.properties -------------------------------
+echo "-> Configuring config.properties..."
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
+cd ${REMOTE_DIR}
+iconv -f IBM-1047 -t ISO8859-1 config.properties | \
+  sed 's|cobolcheck.test.program.path = ./testruns|cobolcheck.test.program.path = ./|' | \
+  iconv -f ISO8859-1 -t IBM-1047 > config_new.properties && \
+  mv config_new.properties config.properties
+printf 'zos.process = zos_run_tests\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
+"
+echo "config.properties configured."
 
 # --- Generate zos_run_tests script on mainframe ----------------
 echo "-> Generating zos_run_tests script..."
@@ -82,18 +95,5 @@ printf './\${PROGRAM%.CBL}\n' >> ${REMOTE_DIR}/scripts/zos_run_tests
 chmod +x ${REMOTE_DIR}/scripts/zos_run_tests
 "
 echo "zos_run_tests script generated."
-
-# --- Configure config.properties -------------------------------
-echo "-> Configuring config.properties..."
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
-cd ${REMOTE_DIR}
-iconv -f IBM-1047 -t ISO8859-1 config.properties | \
-  sed 's/cobolcheck.test.run = true/cobolcheck.test.run = false/' | \
-  iconv -f ISO8859-1 -t IBM-1047 > config_new.properties && \
-  mv config_new.properties config.properties
-printf 'z/os.process = zos_run_tests\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
-printf 'zos.process = zos_run_tests\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
-"
-echo "config.properties configured."
 
 echo "zowe_operations.sh completed successfully."
