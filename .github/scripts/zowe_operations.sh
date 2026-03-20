@@ -87,7 +87,10 @@ echo "zos_run_tests script generated."
 echo "-> Configure config.properties..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
 cd ${REMOTE_DIR}
-printf 'cobolcheck.test.run = false\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
+iconv -f IBM-1047 -t ISO8859-1 config.properties | \
+  sed 's/cobolcheck.test.run = true/cobolcheck.test.run = false/' | \
+  iconv -f ISO8859-1 -t IBM-1047 > config_new.properties && \
+  mv config_new.properties config.properties
 "
 echo "config.properties updated."
 
