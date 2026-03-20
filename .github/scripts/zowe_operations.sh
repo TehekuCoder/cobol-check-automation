@@ -35,7 +35,7 @@ echo "Upload complete."
 # --- Unzip on mainframe ----------------------------------------
 echo "-> Unzip on mainframe..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "cd ${REMOTE_DIR} && unzip -o cobol-check.zip && rm cobol-check.zip"
+  "cd ${REMOTE_DIR} && /usr/lpp/java/J8.0_64/bin/jar xf cobol-check.zip && rm cobol-check.zip"
 echo "Unzip complete."
 
 # --- Verify result ---------------------------------------------
