@@ -40,21 +40,6 @@ echo "-> Unzipping on mainframe..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "cd ${REMOTE_DIR} && /usr/lpp/java/J8.0_64/bin/jar xf cobol-check.zip && rm cobol-check.zip"
 
-# --- Upload COBOL source files ---------------------------------
-echo "-> Uploading source files..."
-sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
-  $GITHUB_WORKSPACE/src/main/cobol/NUMBERS.CBL \
-  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL"
-
-sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
-  $GITHUB_WORKSPACE/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut \
-  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut"
-
-sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
-  $GITHUB_WORKSPACE/NUMBERS.JCL \
-  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/NUMBERS.JCL"
-echo "Source files uploaded."
-
 # --- Convert uploaded files to EBCDIC --------------------------
 echo "-> Converting files to EBCDIC..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
@@ -70,6 +55,23 @@ iconv -f ISO8859-1 -t IBM-1047 \
      ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut
 "
 echo "Files converted to EBCDIC."
+
+# --- Upload COBOL source files ---------------------------------
+echo "-> Uploading source files..."
+sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
+  $GITHUB_WORKSPACE/src/main/cobol/NUMBERS.CBL \
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL"
+
+sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
+  $GITHUB_WORKSPACE/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut \
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut"
+
+sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
+  $GITHUB_WORKSPACE/NUMBERS.JCL \
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/NUMBERS.JCL"
+echo "Source files uploaded."
+
+
 
 # --- Generate zos_run_tests script on mainframe ----------------
 echo "-> Generating zos_run_tests script..."
@@ -95,14 +97,4 @@ iconv -f IBM-1047 -t ISO8859-1 config.properties | \
 echo 'linux.process = zos_run_tests' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
 "
 echo "config.properties configured."
-
-# --- Dekompiliere Launcher -------------------------------------
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
-cd /tmp
-/usr/lpp/java/J8.0_64/bin/jar xf ${REMOTE_DIR}/bin/cobol-check-0.2.19.jar \
-  org/openmainframeproject/cobolcheck/features/launcher/Launcher.class
-/usr/lpp/java/J8.0_64/bin/javap -c \
-  org/openmainframeproject/cobolcheck/features/launcher/Launcher.class 2>&1
-"
-
 echo "zowe_operations.sh completed successfully."
