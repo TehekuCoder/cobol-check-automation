@@ -20,6 +20,9 @@ SSH_OPTS="-p 22 -o StrictHostKeyChecking=no -o BatchMode=no"
 
 echo "-> Connect with ${SSH_USERNAME}@${SSH_HOST}..."
 
+# --- Fix line endings before upload ----------------------------
+sed -i 's/\r//' $GITHUB_WORKSPACE/.github/scripts/remote_cobolcheck.sh
+
 # --- Upload remote script --------------------------------------
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
   $GITHUB_WORKSPACE/.github/scripts/remote_cobolcheck.sh \
