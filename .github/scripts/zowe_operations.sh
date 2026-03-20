@@ -88,10 +88,11 @@ echo "-> Configure config.properties..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
 cd ${REMOTE_DIR}
 printf 'cobolcheck.test.run = false\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
-printf 'unix.process = zos_run_tests\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
-printf 'zos.process = zos_run_tests\n' | iconv -f ISO8859-1 -t IBM-1047 >> config.properties
 "
 echo "config.properties updated."
+
+sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
+  "iconv -f IBM-1047 -t ISO8859-1 ${REMOTE_DIR}/config.properties | grep 'test.run'"
 
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
   "iconv -f IBM-1047 -t ISO8859-1 ${REMOTE_DIR}/config.properties 2>/dev/null | head -20 || cat ${REMOTE_DIR}/config.properties | head -20"
