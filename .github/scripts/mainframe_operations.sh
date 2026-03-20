@@ -26,6 +26,7 @@ sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
 # --- Generate remote script directly on mainframe --------------
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
 rm -f ${REMOTE_DIR}/remote_cobolcheck.sh
+echo 'java -XshowSettings:property 2>&1 | grep os.name' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 echo 'LOWERCASE_USERNAME=\$1' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 echo 'USERNAME=\$2' >> ${REMOTE_DIR}/remote_cobolcheck.sh
 echo 'REMOTE_DIR=\"/z/\${LOWERCASE_USERNAME}/cobolcheck\"' >> ${REMOTE_DIR}/remote_cobolcheck.sh
