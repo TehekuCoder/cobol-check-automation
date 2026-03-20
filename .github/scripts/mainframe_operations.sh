@@ -1,51 +1,47 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # -----------------------------------------------------------------
 # mainframe_operations.sh
-# Runs a COBOL check for the NUMBERS program via SSH on the
-# IBM Z Xplore Server and copies the results to the MVS datasets.
+# Runs on the IBM Z Xplore mainframe via: ssh ... 'sh -s' < this_file
+# Runs COBOL Check for NUMBERS and copies results to MVS datasets.
 # -----------------------------------------------------------------
-set -euo pipefail
 
-: "${SSH_HOST:?ERROR: SSH_HOST is not set}"
-: "${SSH_USERNAME:?ERROR: SSH_USERNAME is not set}"
-: "${SSH_PASSWORD:?ERROR: SSH_PASSWORD is not set}"
+# --- Environment setup -----------------------------------------
+export JAVA_HOME=/usr/lpp/java/J8.0_64
+export PATH="${JAVA_HOME}/bin:${PATH}"
 
+# --- Variables -------------------------------------------------
 LOWERCASE_USERNAME=$(echo "$SSH_USERNAME" | tr '[:upper:]' '[:lower:]')
 REMOTE_DIR="/z/${LOWERCASE_USERNAME}/cobolcheck"
 PROGRAM="NUMBERS"
 
-export SSHPASS="$SSH_PASSWORD"
-SSH_OPTS="-p 22 -o StrictHostKeyChecking=no -o BatchMode=no"
+echo "-> Working directory: ${REMOTE_DIR}"
+cd "${REMOTE_DIR}"
 
-echo "-> Connecting to ${SSH_USERNAME}@${SSH_HOST}..."
+# --- Make scripts executable -----------------------------------
+chmod +x scripts/zos_run_tests
 
-# --- Generate remote script directly on mainframe --------------
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
-rm -f ${REMOTE_DIR}/remote_cobolcheck.sh
-printf 'LOWERCASE_USERNAME=\$1\n' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-printf 'USERNAME=\$2\n' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-printf 'REMOTE_DIR=\"/z/\${LOWERCASE_USERNAME}/cobolcheck\"\n' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-printf 'PROGRAM=\"NUMBERS\"\n' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-printf 'export JAVA_HOME=/usr/lpp/java/J8.0_64\n' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-printf 'export PATH=\"\${JAVA_HOME}/bin:\${PATH}\"\n' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-printf 'cd \"\${REMOTE_DIR}\"\n' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-printf 'chmod +x scripts/zos_run_tests\n' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-printf 'java -jar \${REMOTE_DIR}/bin/cobol-check-0.2.19.jar -p \"\${PROGRAM}\"\n' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-printf 'cp \"testruns/CC##99.CBL\" \"//\x27\${USERNAME}.CBL(\${PROGRAM})\x27\"\n' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-printf 'cp \"\${PROGRAM}.JCL\" \"//\x27\${USERNAME}.JCL(\${PROGRAM})\x27\"\n' >> ${REMOTE_DIR}/remote_cobolcheck.sh
-chmod +x ${REMOTE_DIR}/remote_cobolcheck.sh
-"
+# --- Run COBOL Check -------------------------------------------
+echo "-> Running COBOL Check for ${PROGRAM}..."
+java -jar ${REMOTE_DIR}/bin/cobol-check-0.2.19.jar -p "${PROGRAM}"
+echo "-> COBOL Check completed."
 
-# --- Check how COBOL Check reads os.name ---------------------
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
-cd /tmp
-/usr/lpp/java/J8.0_64/bin/jar xf ${REMOTE_DIR}/bin/cobol-check-0.2.19.jar \
-  org/openmainframeproject/cobolcheck/services/platform/Platform.class
-/usr/lpp/java/J8.0_64/bin/javap -c org/openmainframeproject/cobolcheck/services/platform/Platform.class 2>&1 | head -80
-"
+# --- Copy CC##99.CBL to MVS dataset ----------------------------
+if [ -f "CC##99.CBL" ]; then
+  cp "CC##99.CBL" "//'${SSH_USERNAME}.CBL(${PROGRAM})'" && \
+    echo "-> CC##99.CBL copied to ${SSH_USERNAME}.CBL(${PROGRAM})" || \
+    echo "-> Failed to copy CC##99.CBL"
+else
+  echo "-> CC##99.CBL not found."
+  exit 1
+fi
 
-# --- Execute it on the mainframe -------------------------------
-sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" \
-  "zsh ${REMOTE_DIR}/remote_cobolcheck.sh ${LOWERCASE_USERNAME} ${SSH_USERNAME}"
+# --- Copy JCL file to MVS dataset ------------------------------
+if [ -f "${PROGRAM}.JCL" ]; then
+  cp "${PROGRAM}.JCL" "//'${SSH_USERNAME}.JCL(${PROGRAM})'" && \
+    echo "-> ${PROGRAM}.JCL copied to ${SSH_USERNAME}.JCL(${PROGRAM})" || \
+    echo "-> Failed to copy ${PROGRAM}.JCL"
+else
+  echo "-> ${PROGRAM}.JCL not found — JCL step skipped."
+fi
 
 echo "mainframe_operations.sh completed successfully."
