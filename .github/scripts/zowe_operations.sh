@@ -49,8 +49,8 @@ sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
 
 echo "-> Upload NUMBERS.cut test suite..."
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
-  $GITHUB_WORKSPACE/src/test/cobol/NUMBERS/NUMBERS.cut \
-  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/test/cobol/NUMBERS/NUMBERS.cut"
+  $GITHUB_WORKSPACE/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut \
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut"
 
 echo "-> Upload NUMBERS.JCL..."
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
