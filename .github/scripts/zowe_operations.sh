@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ----------------------------------------------------------------
 # zowe_operations.sh
-# Uploads the COBOL Check zip and source files to the
-# IBM Z Xplore Server and configures the environment.
+# Uploads COBOL Check zip and source files for NUMBERS, EMPPAY
+# and DEPTPAY to the IBM Z Xplore Server.
 # ----------------------------------------------------------------
 set -euo pipefail
 
@@ -24,6 +24,8 @@ sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
 mkdir -p ${REMOTE_DIR}
 mkdir -p ${REMOTE_DIR}/src/main/cobol
 mkdir -p ${REMOTE_DIR}/src/test/cobol/NUMBERS
+mkdir -p ${REMOTE_DIR}/src/test/cobol/EMPPAY
+mkdir -p ${REMOTE_DIR}/src/test/cobol/DEPTPAY
 mkdir -p ${REMOTE_DIR}/scripts
 mkdir -p ${REMOTE_DIR}/testruns
 "
@@ -47,32 +49,55 @@ sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL"
 
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
+  $GITHUB_WORKSPACE/src/main/cobol/EMPPAY.CBL \
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/main/cobol/EMPPAY.CBL"
+
+sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
+  $GITHUB_WORKSPACE/src/main/cobol/DEPTPAY.CBL \
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/main/cobol/DEPTPAY.CBL"
+
+# --- Upload test suites ----------------------------------------
+sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
   $GITHUB_WORKSPACE/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut"
 
 sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
+  $GITHUB_WORKSPACE/src/test/cobol/EMPPAY/EMPPAY.cut \
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/test/cobol/EMPPAY/EMPPAY.cut"
+
+sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
+  $GITHUB_WORKSPACE/src/test/cobol/DEPTPAY/DEPTPAY.cut \
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/src/test/cobol/DEPTPAY/DEPTPAY.cut"
+
+# --- Upload JCL files ------------------------------------------
+sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
   $GITHUB_WORKSPACE/NUMBERS.JCL \
   "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/NUMBERS.JCL"
+
+sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
+  $GITHUB_WORKSPACE/EMPPAY.JCL \
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/EMPPAY.JCL"
+
+sshpass -e scp -P 22 -o StrictHostKeyChecking=no \
+  $GITHUB_WORKSPACE/DEPTPAY.JCL \
+  "${SSH_USERNAME}@${SSH_HOST}:${REMOTE_DIR}/DEPTPAY.JCL"
 echo "Source files uploaded."
 
 # --- Convert uploaded files to EBCDIC --------------------------
 echo "-> Converting files to EBCDIC..."
 sshpass -e ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" "
-iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL \
-  > ${REMOTE_DIR}/src/main/cobol/NUMBERS_TMP.CBL && \
-  mv ${REMOTE_DIR}/src/main/cobol/NUMBERS_TMP.CBL \
-     ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL
-
-iconv -f ISO8859-1 -t IBM-1047 \
+for FILE in \
+  ${REMOTE_DIR}/src/main/cobol/NUMBERS.CBL \
+  ${REMOTE_DIR}/src/main/cobol/EMPPAY.CBL \
+  ${REMOTE_DIR}/src/main/cobol/DEPTPAY.CBL \
   ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut \
-  > ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_TMP.cut && \
-  mv ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest_TMP.cut \
-     ${REMOTE_DIR}/src/test/cobol/NUMBERS/SymbolicRelationsTest.cut
-
-iconv -f ISO8859-1 -t IBM-1047 ${REMOTE_DIR}/NUMBERS.JCL \
-  > ${REMOTE_DIR}/NUMBERS_TMP.JCL && \
-  mv ${REMOTE_DIR}/NUMBERS_TMP.JCL \
-     ${REMOTE_DIR}/NUMBERS.JCL
+  ${REMOTE_DIR}/src/test/cobol/EMPPAY/EMPPAY.cut \
+  ${REMOTE_DIR}/src/test/cobol/DEPTPAY/DEPTPAY.cut \
+  ${REMOTE_DIR}/NUMBERS.JCL \
+  ${REMOTE_DIR}/EMPPAY.JCL \
+  ${REMOTE_DIR}/DEPTPAY.JCL; do
+  iconv -f ISO8859-1 -t IBM-1047 \$FILE > \${FILE}.tmp && mv \${FILE}.tmp \$FILE
+done
 "
 echo "Files converted to EBCDIC."
 
