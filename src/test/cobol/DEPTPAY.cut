@@ -7,3 +7,7 @@
             TestCase 'TOTAL AVERAGE SALARY TO BE 111111.11'
             PERFORM AVERAGE-SALARY.
             EXPECT DEPT-TOTAL-SALARIES TO BE 111111.11
+
+            TestCase 'average salary will be greater than 5840'
+            PERFORM AVERAGE-SALARY.
+            EXPECT DEPT-AVG-SALARY >= 5840
