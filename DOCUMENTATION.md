@@ -201,7 +201,7 @@ COBOL Check reads the test suite (`.cut` file) and the COBOL source code, merges
 ### 6.2 Directory Structure on the Mainframe
 
 ```
-/z/z88469/cobolcheck/
+/z/<YOUR_USERNAME>/cobolcheck/
   bin/
     cobol-check-0.2.19.jar        # COBOL Check JAR
   scripts/
@@ -310,7 +310,7 @@ Each program has its own JCL file that performs two steps: compilation with the 
 | Trigger | Git push to `main` starts the pipeline automatically |
 | Build | COBOL Check generates `CC##99.CBL` |
 | Test | JCL job compiles and executes the test code |
-| Deploy | Compiled program lands in `Z88469.LOAD` |
+| Deploy | Compiled program lands in `<YOUR_USERNAME>.LOAD` |
 
 ### 9.2 Important Shell Concepts
 
